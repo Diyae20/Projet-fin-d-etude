@@ -50,26 +50,15 @@ class RendezVousSerializer(serializers.ModelSerializer):
         if medecin_id and date:
             # Récupérer le profil du médecin pour obtenir le nombre maximum de patients par jour
             try:
-                # Essayer d'abord avec user_id (cas où medecin_id est l'ID du modèle User)
                 medecin_profile = Medecin.objects.get(user_id=medecin_id)
                 max_patients = medecin_profile.max_patients_par_jour or 10  # 10 patients par défaut
-                # Utiliser l'ID du modèle User pour compter les rendez-vous
-                user_id_for_rdv = medecin_id
             except Medecin.DoesNotExist:
-                try:
-                    # Essayer ensuite avec l'ID du modèle Medecin
-                    medecin_profile = Medecin.objects.get(id=medecin_id)
-                    max_patients = medecin_profile.max_patients_par_jour or 10  # 10 patients par défaut
-                    # Utiliser l'ID du modèle User pour compter les rendez-vous
-                    user_id_for_rdv = medecin_profile.user_id
-                except Medecin.DoesNotExist:
-                    # Si le profil du médecin n'existe pas, utiliser la valeur par défaut
-                    max_patients = 10  # 10 patients par défaut
-                    user_id_for_rdv = medecin_id
+                # Si le profil du médecin n'existe pas, utiliser la valeur par défaut
+                max_patients = 10  # 10 patients par défaut
 
             # Compter le nombre de rendez-vous pour ce jour
             rdv_count = RendezVous.objects.filter(
-                medecin_id=user_id_for_rdv,
+                medecin_id=medecin_id,
                 date=date,
                 statut__in=['confirme', 'en_attente']
             ).exclude(id=self.instance.id if self.instance else None).count()
@@ -85,8 +74,6 @@ class RendezVousSerializer(serializers.ModelSerializer):
         """
         Créer un rendez-vous en définissant le patient comme l'utilisateur connecté
         """
-        from medecins.models import Medecin
-
         patient_id = validated_data.pop('patient_id', None)
         medecin_id = validated_data.pop('medecin_id', None)
 
@@ -97,14 +84,6 @@ class RendezVousSerializer(serializers.ModelSerializer):
         # Si medecin_id n'est pas fourni, utiliser l'utilisateur connecté
         if not medecin_id:
             medecin_id = self.context['request'].user.id
-
-        # Vérifier si medecin_id correspond à un ID de modèle Medecin et le convertir en ID de modèle User si nécessaire
-        try:
-            medecin_profile = Medecin.objects.get(id=medecin_id)
-            medecin_id = medecin_profile.user_id
-        except Medecin.DoesNotExist:
-            # Si ce n'est pas un ID de modèle Medecin, supposer que c'est déjà un ID de modèle User
-            pass
 
         rendezvous = RendezVous.objects.create(
             patient_id=patient_id,
@@ -117,8 +96,6 @@ class RendezVousSerializer(serializers.ModelSerializer):
         """
         Mettre à jour un rendez-vous et les informations associées du patient et du médecin
         """
-        from medecins.models import Medecin
-
         patient_id = validated_data.pop('patient_id', None)
         medecin_id = validated_data.pop('medecin_id', None)
 
@@ -128,13 +105,7 @@ class RendezVousSerializer(serializers.ModelSerializer):
 
         # Mettre à jour le médecin si l'ID est fourni
         if medecin_id is not None:
-            # Vérifier si medecin_id correspond à un ID de modèle Medecin et le convertir en ID de modèle User si nécessaire
-            try:
-                medecin_profile = Medecin.objects.get(id=medecin_id)
-                instance.medecin_id = medecin_profile.user_id
-            except Medecin.DoesNotExist:
-                # Si ce n'est pas un ID de modèle Medecin, supposer que c'est déjà un ID de modèle User
-                instance.medecin_id = medecin_id
+            instance.medecin_id = medecin_id
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)

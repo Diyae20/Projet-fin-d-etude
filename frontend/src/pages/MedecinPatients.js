@@ -281,11 +281,9 @@ const MedecinPatients = () => {
                           day: 'numeric'
                         })} à {rdv.heure}
                       </div>
-                      {rdv.motif && (
-                        <div className="rendezvous-motif">
-                          📝 Motif: {rdv.motif}
-                        </div>
-                      )}
+                      <div className="rendezvous-patient">
+                        👤 {rdv.patient_prenom} {rdv.patient_nom}
+                      </div>
                       <span className={`rendezvous-statut ${getStatutClass(rdv.statut)}`}>
                         {getStatutLabel(rdv.statut)}
                       </span>
@@ -312,7 +310,7 @@ const MedecinPatients = () => {
           <div className="modal-content">
             <div className="modal-header">
               <h3>Notes de consultation</h3>
-              <button className="close-modal" onClick={handleCloseNotesModal}>×</button>
+              <button className="close-modal" onClick={handleCloseNotesModal}>x</button>
             </div>
             <div className="modal-body">
               <p>
@@ -323,9 +321,6 @@ const MedecinPatients = () => {
                   day: 'numeric'
                 })} à {selectedRendezvous.heure}
               </p>
-              {selectedRendezvous.motif && (
-                <p><strong>Motif:</strong> {selectedRendezvous.motif}</p>
-              )}
               <div className="form-group">
                 <label htmlFor="notes">Notes du médecin:</label>
                 {isEditingNotes ? (

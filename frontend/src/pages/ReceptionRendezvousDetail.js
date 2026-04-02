@@ -89,14 +89,17 @@ const ReceptionRendezvousDetail = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.put(`/users/reception/rendezvous/${id}/`, formData);
+      console.log("Données envoyées:", formData);
+      const response = await api.put(`/users/reception/rendezvous/${id}/`, formData);
+      console.log("Réponse du serveur:", response.data);
       setSuccess("Informations mises à jour avec succès.");
       setIsEditing(false);
       fetchRendezvous();
       setTimeout(() => setSuccess(''), 3000);
     } catch (error) {
       console.error('Erreur lors de la mise à jour du rendez-vous:', error);
-      setError("Erreur lors de la mise à jour des informations.");
+      console.error('Détails de l\'erreur:', error.response?.data);
+      setError(error.response?.data?.detail || "Erreur lors de la mise à jour des informations.");
     }
   };
 

@@ -506,11 +506,6 @@ const MedecinDashboard = () => {
                       <div className="rendezvous-patient">
                         👤 {rdv.patient_prenom} {rdv.patient_nom}
                       </div>
-                      {rdv.motif && (
-                        <div className="rendezvous-motif">
-                          📝 {rdv.motif}
-                        </div>
-                      )}
                       <span className={`rendezvous-statut ${getStatutClass(rdv.statut)}`}>
                         {getStatutLabel(rdv.statut)}
                       </span>

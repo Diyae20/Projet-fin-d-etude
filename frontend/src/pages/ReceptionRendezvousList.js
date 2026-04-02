@@ -10,6 +10,8 @@ const ReceptionRendezvousList = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedRendezvous, setSelectedRendezvous] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,17 +60,27 @@ const ReceptionRendezvousList = () => {
     setFilteredRendezvous(filtered);
   };
 
-  const handleDelete = async (rvId) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ?')) {
-      return;
-    }
+  const handleDeleteClick = (rv) => {
+    setSelectedRendezvous(rv);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedRendezvous) return;
 
     try {
-      await api.delete(`/users/reception/rendezvous/${rvId}/`);
-      setRendezvous(rendezvous.filter(rv => rv.id !== rvId));
+      await api.delete(`/users/reception/rendezvous/${selectedRendezvous.id}/`);
+      setRendezvous(rendezvous.filter(rv => rv.id !== selectedRendezvous.id));
+      setShowDeleteModal(false);
+      setSelectedRendezvous(null);
     } catch (error) {
       setError('Erreur lors de la suppression du rendez-vous.');
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setSelectedRendezvous(null);
   };
 
   const getStatutBadgeClass = (statut) => {
@@ -179,7 +191,7 @@ const ReceptionRendezvousList = () => {
                             </button>
                             <button
                               className="btn btn-sm btn-danger"
-                              onClick={() => handleDelete(rv.id)}
+                              onClick={() => handleDeleteClick(rv)}
                               style={{minWidth: '60px'}}
                             >
                               Supprimer
@@ -202,6 +214,155 @@ const ReceptionRendezvousList = () => {
           Retour au tableau de bord
         </button>
       </div>
+
+      {showDeleteModal && (
+        <div style={{
+          position: 'fixed',
+          top: '0',
+          left: '0',
+          right: '0',
+          bottom: '0',
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: '9999'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '10px',
+            padding: '30px',
+            width: '90%',
+            maxWidth: '500px',
+            boxShadow: '0 5px 15px rgba(0,0,0,0.3)',
+            animation: 'fadeIn 0.3s ease-in-out'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px',
+              paddingBottom: '15px',
+              borderBottom: '1px solid #eee'
+            }}>
+              <h3 style={{
+                margin: '0',
+                color: '#333',
+                fontSize: '22px',
+                fontWeight: '600'
+              }}>
+                Confirmation de suppression
+              </h3>
+              <button 
+                onClick={handleDeleteCancel}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  color: '#999',
+                  cursor: 'pointer',
+                  padding: '0',
+                  width: '30px',
+                  height: '30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#f0f0f0'}
+                onMouseOut={(e) => e.target.style.backgroundColor = 'transparent'}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{marginBottom: '25px'}}>
+              <p style={{
+                margin: '0 0 20px 0',
+                color: '#555',
+                fontSize: '16px',
+                lineHeight: '1.5'
+              }}>
+                Êtes-vous sûr de vouloir supprimer ce rendez-vous ?
+              </p>
+
+              {selectedRendezvous && (
+                <div style={{
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '8px',
+                  padding: '15px',
+                  border: '1px solid #e9ecef'
+                }}>
+                  <div style={{
+                    marginBottom: '8px',
+                    color: '#495057',
+                    fontSize: '14px'
+                  }}>
+                    <strong>Patient:</strong> {selectedRendezvous.patient ? `${selectedRendezvous.patient.first_name} ${selectedRendezvous.patient.last_name}` : 'N/A'}
+                  </div>
+                  <div style={{
+                    marginBottom: '8px',
+                    color: '#495057',
+                    fontSize: '14px'
+                  }}>
+                    <strong>Médecin:</strong> {selectedRendezvous.medecin ? `${selectedRendezvous.medecin.first_name} ${selectedRendezvous.medecin.last_name}` : 'N/A'}
+                  </div>
+                  <div style={{
+                    color: '#495057',
+                    fontSize: '14px'
+                  }}>
+                    <strong>Date:</strong> {new Date(selectedRendezvous.date).toLocaleDateString('fr-FR')} à {selectedRendezvous.heure}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '10px'
+            }}>
+              <button 
+                onClick={handleDeleteCancel}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#6c757d',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#5a6268'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#6c757d'}
+              >
+                Annuler
+              </button>
+              <button 
+                onClick={handleDeleteConfirm}
+                style={{
+                  padding: '10px 20px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#c82333'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#dc3545'}
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

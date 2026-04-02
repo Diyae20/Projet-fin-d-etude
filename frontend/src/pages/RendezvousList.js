@@ -472,11 +472,7 @@ const RendezvousList = () => {
                       <div className="rendezvous-medecin">
                         👨‍⚕️ Dr. {rdv.medecin_nom}
                       </div>
-                      {rdv.motif && (
-                        <div className="rendezvous-motif">
-                          📝 {rdv.motif}
-                        </div>
-                      )}
+
                       <span className={`rendezvous-statut ${getStatutClass(rdv.statut)}`}>
                         {getStatutLabel(rdv.statut)}
                       </span>
