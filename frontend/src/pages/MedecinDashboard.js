@@ -29,6 +29,7 @@ const MedecinDashboard = () => {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [originalPhoto, setOriginalPhoto] = useState(null);
   const [removePhoto, setRemovePhoto] = useState(false);
+  const [showSuggestionsWarning, setShowSuggestionsWarning] = useState(false);
 
   useEffect(() => {
     fetchMedecinProfile();
@@ -65,6 +66,25 @@ const MedecinDashboard = () => {
         setOriginalPhoto(null);
       }
       setRemovePhoto(false);
+
+      // Vérifier si le médecin a configuré les suggestions pour au moins un bouton
+      const suggestionsConfig = result.data.suggestions_config;
+      if (suggestionsConfig) {
+        const hasVertSuggestions = suggestionsConfig.vert && suggestionsConfig.vert.length > 0;
+        const hasJauneSuggestions = suggestionsConfig.jaune && suggestionsConfig.jaune.length > 0;
+        const hasRougeSuggestions = suggestionsConfig.rouge && suggestionsConfig.rouge.length > 0;
+
+        // Ne plus afficher l'avertissement si au moins une suggestion est configurée
+        if (hasVertSuggestions || hasJauneSuggestions || hasRougeSuggestions) {
+          setShowSuggestionsWarning(false);
+        } else {
+          // Si aucune suggestion n'est configurée, afficher l'avertissement
+          setShowSuggestionsWarning(true);
+        }
+      } else {
+        // Si pas de configuration de suggestions, afficher l'avertissement
+        setShowSuggestionsWarning(true);
+      }
     } else {
       setError(result.error);
     }
@@ -252,10 +272,108 @@ const MedecinDashboard = () => {
 
   return (
     <div className="medecin-dashboard">
-      <h1>Tableau de bord - Médecin</h1>
+      {!editMode && <h1>Tableau de bord - Médecin</h1>}
       
       {error && <Alert type="error" message={error} onClose={() => setError('')} />}
       {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
+
+      {showSuggestionsWarning && !editMode && (
+        <div style={{
+          marginBottom: '20px',
+          borderRadius: '12px',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: '#fff',
+          padding: '20px',
+          boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            position: 'absolute',
+            top: '-50px',
+            right: '-50px',
+            width: '150px',
+            height: '150px',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.1)',
+            zIndex: '0'
+          }}></div>
+          <div style={{ position: 'relative', zIndex: '1' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div style={{ flex: '1', paddingRight: '15px' }}>
+                <h4 style={{ 
+                  marginTop: '0', 
+                  marginBottom: '15px',
+                  fontSize: '1.25rem',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  <span style={{ fontSize: '1.5rem' }}>⚙️</span>
+                  Configuration des suggestions requise
+                </h4>
+                <p style={{ marginBottom: '12px', fontSize: '1rem', lineHeight: '1.5' }}>
+                  Vous n'avez pas encore configuré les suggestions pour tous les boutons (vert, jaune et rouge). 
+                  Pour que ces boutons s'affichent pour vos patients, vous devez configurer au moins une suggestion pour chaque bouton.
+                </p>
+                <div style={{
+                  display: 'flex',
+                  gap: '10px',
+                  marginTop: '15px',
+                  flexWrap: 'wrap'
+                }}>
+                  <button
+                    className="btn btn-light"
+                    onClick={() => navigate('/dashboard/medecin/suggestions')}
+                    style={{
+                      fontWeight: '500',
+                      borderRadius: '8px',
+                      padding: '8px 16px',
+                      border: 'none'
+                    }}
+                  >
+                    Configurer les suggestions
+                  </button>
+                  <button 
+                    className="btn btn-outline-light"
+                    onClick={() => {
+                      setShowSuggestionsWarning(false);
+                    }}
+                    style={{
+                      borderRadius: '8px',
+                      padding: '8px 16px',
+                      borderColor: 'rgba(255, 255, 255, 0.5)'
+                    }}
+                  >
+                    Ignorer ce message
+                  </button>
+                </div>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowSuggestionsWarning(false);
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#fff',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  padding: '0',
+                  lineHeight: '1',
+                  opacity: '0.7',
+                  transition: 'opacity 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.opacity = '1'}
+                onMouseOut={(e) => e.target.style.opacity = '0.7'}
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="dashboard-sections">
         <div className="dashboard-section">
@@ -475,6 +593,12 @@ const MedecinDashboard = () => {
                 </button>
                 <button
                   className="btn btn-primary"
+                  onClick={() => navigate('/dashboard/medecin/suggestions')}
+                >
+                  Suggestions pré-définies
+                </button>
+                <button
+                  className="btn btn-primary"
                   onClick={() => navigate('/dashboard/medecin/patients')}
                 >
                   Voir mes patients
@@ -504,29 +628,19 @@ const MedecinDashboard = () => {
                         })} à {rdv.heure}
                       </div>
                       <div className="rendezvous-patient">
-                        👤 {rdv.patient_prenom} {rdv.patient_nom}
+                        👤 {rdv.patient ? `${rdv.patient.first_name || ''} ${rdv.patient.last_name || ''}` : 'N/A'}
+                        {rdv.type_consultation === 'consultation' && rdv.priorite === 'basse' && (
+                          <div style={{fontSize: '0.85em', color: '#666', marginTop: '4px'}}>
+                            📋 Consultation
+                          </div>
+                        )}
                       </div>
                       <span className={`rendezvous-statut ${getStatutClass(rdv.statut)}`}>
                         {getStatutLabel(rdv.statut)}
                       </span>
                     </div>
 
-                    {rdv.statut === 'en_attente' && (
-                      <div className="rendezvous-actions">
-                        <button
-                          className="btn btn-success"
-                          onClick={() => handleUpdateStatut(rdv.id, 'confirme')}
-                        >
-                          Confirmer
-                        </button>
-                        <button
-                          className="btn btn-danger"
-                          onClick={() => handleUpdateStatut(rdv.id, 'annule')}
-                        >
-                          Refuser
-                        </button>
-                      </div>
-                    )}
+                    
                   </div>
                 ))}
               </div>

@@ -16,6 +16,11 @@ class RendezVous(models.Model):
         ('en_attente', 'En attente'),
     ]
 
+    TYPE_CONSULTATION_CHOICES = [
+        ('consultation', 'Consultation'),
+        ('urgence', 'Urgence'),
+    ]
+
     patient = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -41,6 +46,23 @@ class RendezVous(models.Model):
         choices=STATUT_CHOICES,
         default='en_attente',
         verbose_name="Statut"
+    )
+    type_consultation = models.CharField(
+        max_length=20,
+        choices=TYPE_CONSULTATION_CHOICES,
+        default='consultation',
+        verbose_name="Type de consultation"
+    )
+    priorite = models.CharField(
+        max_length=20,
+        choices=[
+            ('normale', 'Normale'),
+            ('basse', 'Basse'),
+            ('moyenne', 'Moyenne'),
+            ('urgente', 'Urgente'),
+        ],
+        default='normale',
+        verbose_name="Priorité du rendez-vous"
     )
     motif = models.TextField(
         blank=True, 

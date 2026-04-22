@@ -7,6 +7,7 @@ const ReceptionUserDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [rendezvous, setRendezvous] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -22,6 +23,21 @@ const ReceptionUserDetail = () => {
   useEffect(() => {
     fetchUser();
   }, [id]);
+
+  useEffect(() => {
+    if (user) {
+      fetchRendezvous();
+    }
+  }, [user]);
+
+  const fetchRendezvous = async () => {
+    try {
+      const response = await api.get(`/rendezvous/?patient=${id}`);
+      setRendezvous(response.data.results || response.data);
+    } catch (error) {
+      console.error("Erreur lors du chargement des rendez-vous:", error);
+    }
+  };
 
   const fetchUser = async () => {
     try {
@@ -107,14 +123,26 @@ const ReceptionUserDetail = () => {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ?")) {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce patient et tous ses rendez-vous ?")) {
       return;
     }
     try {
-      await api.delete(`/users/reception/users/${id}/`);
+      // Récupérer les rendez-vous du patient
+      const rendezvousResponse = await api.get(`/rendezvous/?patient=${id}`);
+      const rendezvous = rendezvousResponse.data.results || rendezvousResponse.data;
+      
+      // Supprimer tous les rendez-vous du patient
+      for (const rdv of rendezvous) {
+        await api.delete(`/rendezvous/${rdv.id}/`);
+      }
+      
+      // Désactiver le patient au lieu de le supprimer
+      await api.patch(`/users/reception/users/${id}/`, { visible_for_reception: false, is_active: true });
+
+      // Rediriger vers la liste des patients
       navigate('/reception/users');
     } catch (error) {
-      setError("Erreur lors de la suppression de l'utilisateur.");
+      setError("Erreur lors de la suppression des rendez-vous du patient.");
     }
   };
 
@@ -266,12 +294,36 @@ const ReceptionUserDetail = () => {
         </div>
 
         <div className="mt-4">
-          <button
-            className="btn btn-danger"
-            onClick={handleDelete}
-          >
-            Supprimer l'utilisateur
-          </button>
+          <div className="d-flex gap-2">
+            {/* Bouton vert Consultation - toujours affiché */}
+            <button
+              className="btn btn-success"
+              onClick={() => navigate(`/reception/rendezvous/new?patient=${id}`)}
+              style={{minWidth: '100px'}}
+            >
+              Consultation
+            </button>
+
+            {/* Bouton jaune - affiché seulement si le patient a déjà eu des rendez-vous */}
+            {rendezvous.length > 0 && (
+              <button
+                className="btn btn-warning"
+                onClick={() => navigate(`/reception/rendezvous/new?patient=${id}&type=suivi`)}
+                style={{minWidth: '100px'}}
+              >
+                Suivi
+              </button>
+            )}
+
+            {/* Bouton rouge - toujours affiché */}
+            <button
+              className="btn btn-danger"
+              onClick={handleDelete}
+              style={{minWidth: '100px'}}
+            >
+              Supprimer
+            </button>
+          </div>
         </div>
       </div>
     </div>

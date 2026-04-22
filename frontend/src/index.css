@@ -268,10 +268,12 @@ code {
 
 .rendezvous-statut {
   display: inline-block;
-  padding: 5px 10px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 0.8em;
+  font-weight: 500;
+  white-space: nowrap;
+  width: fit-content;
 }
 
 .statut-confirme {
@@ -723,32 +725,17 @@ code {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  padding: 20px;
 }
 
-.modal-content {
-  background-color: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px;
-  border-bottom: 1px solid #e0e0e0;
-}
+/* Les styles du modal sont définis dans Modal.css */
 
 .close-modal {
   background: none;
@@ -821,3 +808,137 @@ code {
   margin-top: 15px;
   margin-right: 10px;
 }
+
+/* Styles pour les boutons de statut */
+.dashboard-container {
+  display: flex;
+  gap: 20px;
+}
+
+.status-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-width: 200px;
+  height: fit-content;
+  position: sticky;
+  top: 20px;
+}
+
+.dashboard-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.status-button {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  width: 100%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.status-button-icon {
+  margin-right: 10px;
+  font-size: 20px;
+}
+
+.status-button-green {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-button-green:hover {
+  background-color: #218838;
+}
+
+.status-button-yellow {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.status-button-yellow:hover {
+  background-color: #e0a800;
+}
+
+.status-button-red {
+  background-color: #dc3545;
+  color: white;
+}
+
+.status-button-red:hover {
+  background-color: #c82333;
+}
+.medecin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.priority-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.priority-button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.priority-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.priority-icon {
+  font-size: 20px;
+  margin-bottom: 5px;
+}
+
+.priority-text {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.priority-button-low {
+  background-color: #28a745;
+  color: white;
+}
+
+.priority-button-medium {
+  background-color: #ffc107;
+  color: #333;
+}
+
+.priority-button-urgent {
+  background-color: #dc3545;
+  color: white;
+}
+

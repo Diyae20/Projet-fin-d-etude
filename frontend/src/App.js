@@ -9,6 +9,7 @@ import MedecinList from './pages/MedecinList';
 import MedecinDetail from './pages/MedecinDetail';
 import MedecinDashboard from './pages/MedecinDashboard';
 import MedecinPatients from './pages/MedecinPatients';
+import SuggestionsConfig from './pages/SuggestionsConfig';
 import RendezvousList from './pages/RendezvousList';
 import ChangePassword from './pages/ChangePassword';
 import DeleteAccount from './pages/DeleteAccount';
@@ -63,6 +64,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <MedecinPatients />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/dashboard/medecin/suggestions"
+                element={
+                  <ProtectedRoute>
+                    <SuggestionsConfig />
                   </ProtectedRoute>
                 }
               />

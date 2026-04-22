@@ -25,9 +25,12 @@ export const rendezvousService = {
       const response = await api.post('/rendezvous/', rendezvousData);
       return { success: true, data: response.data };
     } catch (error) {
+      console.error('Erreur complète lors de la création du rendez-vous:', error);
+      console.error('Réponse du serveur:', error.response);
+      console.error('Données de la réponse:', error.response?.data);
       return {
         success: false,
-        error: error.response?.data?.detail || 'Erreur lors de la création du rendez-vous'
+        error: error.response?.data?.detail || error.response?.data?.message || 'Erreur lors de la création du rendez-vous'
       };
     }
   },

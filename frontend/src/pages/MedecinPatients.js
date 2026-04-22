@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { rendezvousService } from '../services/rendezvousService';
+import api from '../services/api';
 import Loading from '../components/Loading';
 import Alert from '../components/Alert';
 
@@ -13,6 +14,7 @@ const MedecinPatients = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [currentPatientId, setCurrentPatientId] = useState(null);
   const [patientRendezvous, setPatientRendezvous] = useState([]);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [selectedRendezvous, setSelectedRendezvous] = useState(null);
@@ -66,31 +68,54 @@ const MedecinPatients = () => {
 
     // Extraire les patients uniques de tous les rendez-vous
     const patientsMap = new Map();
+
     allRendezvous.forEach(rdv => {
-      if (!patientsMap.has(rdv.patient)) {
-        patientsMap.set(rdv.patient, {
-          id: rdv.patient,
-          nom: rdv.patient_nom,
-          prenom: rdv.patient_prenom,
-          email: rdv.patient_email,
-          phone: rdv.patient_phone,
-          rendezvous_count: 1,
-          dernier_rendezvous: rdv.date,
-          dernier_statut: rdv.statut
-        });
+      // Vérifier si rdv.patient est un objet ou un ID
+      const patientId = typeof rdv.patient === 'object' ? rdv.patient.id : rdv.patient;
+
+      if (!patientsMap.has(patientId)) {
+        // Si rdv.patient est un objet, utiliser directement ses informations
+        if (typeof rdv.patient === 'object' && rdv.patient) {
+          patientsMap.set(patientId, {
+            id: patientId,
+            nom: rdv.patient.last_name || 'Non renseigné',
+            prenom: rdv.patient.first_name || 'Non renseigné',
+            email: rdv.patient.email || 'Non renseigné',
+            phone: rdv.patient.phone || 'Non renseigné',
+            rendezvous_count: 1,
+            dernier_rendezvous: rdv.date,
+            dernier_statut: rdv.statut,
+            hasNotes: !!rdv.notes
+          });
+        } else {
+          // Si rdv.patient est juste un ID, créer un objet avec des valeurs par défaut
+          patientsMap.set(patientId, {
+            id: patientId,
+            nom: 'Non renseigné',
+            prenom: 'Non renseigné',
+            email: 'Non renseigné',
+            phone: 'Non renseigné',
+            rendezvous_count: 1,
+            dernier_rendezvous: rdv.date,
+            dernier_statut: rdv.statut,
+            hasNotes: !!rdv.notes
+          });
+        }
       } else {
-        const patient = patientsMap.get(rdv.patient);
+        const patient = patientsMap.get(patientId);
         patient.rendezvous_count += 1;
         // Mettre à jour le dernier rendez-vous si nécessaire
         if (new Date(rdv.date) > new Date(patient.dernier_rendezvous)) {
           patient.dernier_rendezvous = rdv.date;
           patient.dernier_statut = rdv.statut;
+          patient.hasNotes = !!rdv.notes;
         }
       }
     });
 
-    console.log('Patients extraits:', Array.from(patientsMap.values()));
-    setPatients(Array.from(patientsMap.values()));
+    const patients = Array.from(patientsMap.values());
+    console.log('Patients avec informations complètes:', patients);
+    setPatients(patients);
     setLoading(false);
   };
 
@@ -105,7 +130,11 @@ const MedecinPatients = () => {
     if (result.success) {
       // Filtrer les rendez-vous pour ce patient spécifique
       const patientRdv = (result.data.results || result.data).filter(
-        rdv => rdv.patient === patient.id
+        rdv => {
+          // Vérifier si rdv.patient est un objet ou un ID
+          const patientId = typeof rdv.patient === 'object' ? rdv.patient.id : rdv.patient;
+          return patientId === patient.id;
+        }
       );
       // Trier par date décroissante
       patientRdv.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -117,10 +146,55 @@ const MedecinPatients = () => {
     setLoading(false);
   };
 
+  const handleOpenNotesForPatient = async (patient) => {
+    setLoading(true);
+    setError('');
+
+    // Stocker l'ID du patient pour la mise à jour ultérieure
+    setCurrentPatientId(patient.id);
+
+    // Récupérer tous les rendez-vous de ce patient avec ce médecin
+    const result = await rendezvousService.getMedecinRendezvous();
+
+    if (result.success) {
+      // Filtrer les rendez-vous pour ce patient spécifique
+      const patientRdv = (result.data.results || result.data).filter(
+        rdv => {
+          // Vérifier si rdv.patient est un objet ou un ID
+          const patientId = typeof rdv.patient === 'object' ? rdv.patient.id : rdv.patient;
+          return patientId === patient.id;
+        }
+      );
+      // Trier par date décroissante
+      patientRdv.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      // Vérifier s'il y a des rendez-vous
+      if (patientRdv.length > 0) {
+        // Prendre le dernier rendez-vous
+        const lastRdv = patientRdv[0];
+
+        // Mettre à jour les rendez-vous du patient sans afficher la page de détails
+        setPatientRendezvous(patientRdv);
+
+        // Ne pas définir selectedPatient pour éviter d'afficher la page de détails
+        // setSelectedPatient(patient);
+
+        // Ouvrir la modal de notes pour le dernier rendez-vous
+        handleOpenNotesModal(lastRdv);
+      } else {
+        setError('Aucun rendez-vous trouvé pour ce patient.');
+      }
+    } else {
+      setError(result.error);
+    }
+
+    setLoading(false);
+  };
+
   const handleOpenNotesModal = (rendezvous) => {
     setSelectedRendezvous(rendezvous);
     setNoteText(rendezvous.notes || '');
-    setIsEditingNotes(!rendezvous.notes); // Mode édition seulement si pas de notes
+    setIsEditingNotes(true); // Toujours en mode édition
     setShowNotesModal(true);
   };
 
@@ -151,6 +225,16 @@ const MedecinPatients = () => {
             : rdv
         )
       );
+      // Mettre à jour la propriété hasNotes du patient en cours de modification
+      if (currentPatientId) {
+        setPatients(prevPatients =>
+          prevPatients.map(p =>
+            p.id === currentPatientId
+              ? { ...p, hasNotes: true }
+              : p
+          )
+        );
+      }
       // Fermer la modal après l'enregistrement
       handleCloseNotesModal();
     } else {
@@ -219,7 +303,6 @@ const MedecinPatients = () => {
                     <th>Téléphone</th>
                     <th>Nombre de rendez-vous</th>
                     <th>Dernier rendez-vous</th>
-                    <th>Statut</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -232,16 +315,11 @@ const MedecinPatients = () => {
                       <td>{patient.rendezvous_count}</td>
                       <td>{new Date(patient.dernier_rendezvous).toLocaleDateString('fr-FR')}</td>
                       <td>
-                        <span className={`rendezvous-statut ${getStatutClass(patient.dernier_statut)}`}>
-                          {getStatutLabel(patient.dernier_statut)}
-                        </span>
-                      </td>
-                      <td>
                         <button
                           className="btn btn-primary"
-                          onClick={() => handlePatientClick(patient)}
+                          onClick={() => handleOpenNotesForPatient(patient)}
                         >
-                          Voir les détails
+                          {patient.hasNotes ? 'Modifier notes' : 'Ajouter notes'}
                         </button>
                       </td>
                     </tr>
@@ -284,6 +362,11 @@ const MedecinPatients = () => {
                       <div className="rendezvous-patient">
                         👤 {rdv.patient_prenom} {rdv.patient_nom}
                       </div>
+                      {rdv.motif === 'Consultation' && (
+                        <div className="rendezvous-motif">
+                          📋 Consultation
+                        </div>
+                      )}
                       <span className={`rendezvous-statut ${getStatutClass(rdv.statut)}`}>
                         {getStatutLabel(rdv.statut)}
                       </span>
@@ -306,7 +389,7 @@ const MedecinPatients = () => {
       )}
 
       {showNotesModal && (
-        <div className="modal">
+        <div className="modal-overlay">
           <div className="modal-content">
             <div className="modal-header">
               <h3>Notes de consultation</h3>

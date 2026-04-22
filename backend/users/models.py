@@ -17,6 +17,10 @@ class User(AbstractUser):
         choices=ROLE_CHOICES, 
         default='patient'
     )
+    visible_for_reception = models.BooleanField(
+    default=True,
+    verbose_name="Visible pour la réception"
+    )
     phone = models.CharField(
         max_length=20, 
         blank=True, 

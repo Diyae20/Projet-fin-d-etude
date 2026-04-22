@@ -24,14 +24,15 @@ class MedecinSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(write_only=True, required=False, allow_null=True)
     last_name = serializers.CharField(write_only=True, required=False, allow_null=True)
     email = serializers.EmailField(write_only=True, required=False, allow_null=True)
+    suggestions_config = serializers.JSONField(required=False, allow_null=True)
 
     class Meta:
         model = Medecin
         fields = [
             'id', 'user', 'specialite', 'specialite_id', 'bio',
-            'adresse_cabinet', 'telephone', 'ville', 'duree_consultation', 
+            'adresse_cabinet', 'telephone', 'ville', 'duree_consultation',
             'max_patients_par_jour', 'created_at', 'updated_at', 'photo',
-            'first_name', 'last_name', 'email'
+            'first_name', 'last_name', 'email', 'suggestions_config'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
@@ -104,12 +105,13 @@ class MedecinListSerializer(serializers.ModelSerializer):
     specialite_obj = SpecialiteSerializer(source='specialite', read_only=True)
     photo = serializers.ImageField(source='user.photo', read_only=True)
     user = UserSerializer(read_only=True)
+    suggestions_config = serializers.JSONField(required=False, allow_null=True)
 
     class Meta:
         model = Medecin
         fields = [
             'id', 'nom_complet', 'specialite', 'specialite_obj', 'photo', 'user',
-            'ville', 'adresse_cabinet', 'telephone'
+            'ville', 'adresse_cabinet', 'telephone', 'suggestions_config'
         ]
 
 
@@ -125,12 +127,12 @@ class MedecinDetailSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(source='user.last_name', read_only=True)
     prenom = serializers.CharField(read_only=True)
     nom = serializers.CharField(read_only=True)
+    suggestions_config = serializers.JSONField(required=False, allow_null=True)
 
     class Meta:
         model = Medecin
         fields = [
             'id', 'nom_complet', 'specialite', 'photo', 'email', 'first_name', 'last_name', 'prenom', 'nom', 'bio',
             'adresse_cabinet', 'telephone', 'ville', 'duree_consultation',
-            'max_patients_par_jour', 'created_at', 'updated_at'
+            'max_patients_par_jour', 'created_at', 'updated_at', 'suggestions_config'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']

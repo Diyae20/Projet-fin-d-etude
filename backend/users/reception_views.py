@@ -14,7 +14,7 @@ from .serializers import UserSerializer
 from medecins.models import Medecin
 from medecins.serializers import MedecinSerializer, MedecinListSerializer, MedecinDetailSerializer
 from rendezvous.models import RendezVous
-from rendezvous.serializers import RendezVousSerializer
+from rendezvous.serializers import RendezVousSerializer, RendezVousListSerializer
 
 
 class ReceptionUserListView(generics.ListCreateAPIView):
@@ -25,8 +25,8 @@ class ReceptionUserListView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # La réception peut voir tous les utilisateurs
-        return User.objects.all()
+        # La réception peut voir tous les utilisateurs actifs
+        return User.objects.filter(visible_for_reception=True)
 
     def list(self, request, *args, **kwargs):
         # Récupérer tous les utilisateurs avec leurs rendez-vous préchargés
@@ -185,8 +185,12 @@ class ReceptionRendezvousListView(generics.ListCreateAPIView):
     """
     Vue pour la liste et la création des rendez-vous (accessible par la réception)
     """
-    serializer_class = RendezVousSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return RendezVousListSerializer
+        return RendezVousSerializer
 
     def get_queryset(self):
         return RendezVous.objects.all().select_related('patient', 'medecin')
@@ -197,8 +201,12 @@ class ReceptionRendezvousDetailView(generics.RetrieveUpdateDestroyAPIView):
     Vue pour les détails d'un rendez-vous (accessible par la réception)
     """
     queryset = RendezVous.objects.all()
-    serializer_class = RendezVousSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return RendezVousListSerializer
+        return RendezVousSerializer
 
     def perform_update(self, serializer):
         """
@@ -222,8 +230,8 @@ def reception_dashboard(request):
         raise PermissionDenied({'detail': 'Accès non autorisé'})
 
     # Statistiques pour le tableau de bord
-    total_patients = User.objects.filter(role='patient').count()
-    total_medecins = User.objects.filter(role='medecin').count()
+    total_patients = User.objects.filter(role='patient', visible_for_reception=True).count()
+    total_medecins = User.objects.filter(role='medecin', visible_for_reception=True).count()
     total_rendezvous = RendezVous.objects.count()
     rendezvous_en_attente = RendezVous.objects.filter(statut='en_attente').count()
     rendezvous_confirmes = RendezVous.objects.filter(statut='confirme').count()

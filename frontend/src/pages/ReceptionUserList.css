@@ -1,0 +1,116 @@
+
+.reception-user-list {
+  padding: 20px;
+}
+
+.reception-user-list h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.reception-user-list .container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.reception-user-list .card {
+  margin: 0;
+}
+
+.reception-user-list .card-body {
+  padding: 20px;
+}
+
+.reception-user-list .table {
+  width: 100%;
+  margin: 0;
+}
+
+.reception-user-list .table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.9rem;
+  background-color:  #f8f9fa;
+}
+
+.reception-user-list .table td {
+  vertical-align: middle;
+  padding: 15px;
+}
+
+.reception-user-list .badge {
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 20px;
+  font-size: 0.85em;
+}
+
+.reception-user-list .btn {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.reception-user-list .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.reception-user-list .btn-info {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+}
+
+.reception-user-list .btn-info:hover {
+  background-color: #138496;
+}
+
+.reception-user-list .btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+}
+
+.reception-user-list .btn-danger:hover {
+  background-color: #c82333;
+}
+
+.reception-user-list .input-group {
+  margin-bottom: 15px;
+}
+
+.reception-user-list .form-control {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.reception-user-list .form-control:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.reception-user-list .row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -10px;
+}
+
+.reception-user-list .col-md-6 {
+  flex: 0 0 calc(50% - 10px);
+  max-width: calc(50% - 10px);
+  padding: 0 10px;
+}
+
+@media (max-width: 768px) {
+  .reception-user-list .col-md-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}

@@ -1,0 +1,157 @@
+
+.rendezvous-list {
+  padding: 20px;
+}
+
+.rendezvous-list h1 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.dashboard-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-container {
+  display: flex;
+  gap: 20px;
+}
+
+.status-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 200px;
+}
+
+.status-button {
+  padding: 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.status-button-green {
+  background-color: #28a745;
+  color: white;
+}
+
+.status-button-green:hover {
+  background-color: #218838;
+}
+
+.status-button-yellow {
+  background-color: #ffc107;
+  color: #333;
+}
+
+.status-button-yellow:hover {
+  background-color: #e0a800;
+}
+
+.status-button-red {
+  background-color: #dc3545;
+  color: white;
+}
+
+.status-button-red:hover {
+  background-color: #c82333;
+}
+
+.status-button-text {
+  font-size: 16px;
+}
+
+.dashboard-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dashboard-section {
+  margin-bottom: 20px;
+}
+
+.card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.rendezvous-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.rendezvous-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: white;
+  transition: all 0.3s ease;
+}
+
+.rendezvous-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.rendezvous-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rendezvous-date {
+  font-weight: 500;
+  color: #333;
+}
+
+.rendezvous-medecin {
+  color: #666;
+}
+
+.statut-confirme {
+  background-color: #28a745;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.85em;
+}
+
+.statut-annule {
+  background-color: #dc3545;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.85em;
+}
+
+.statut-en_attente {
+  background-color: #ffc107;
+  color: #333;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.85em;
+}
+
+.statut-passe {
+  background-color: #6c757d;
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.85em;
+}
+
+/* Les styles du modal sont définis dans Modal.css */

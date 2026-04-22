@@ -1,0 +1,116 @@
+/* Styles pour les boutons de priorité */
+.medecin-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  margin-top: 20px;
+  align-items: center;
+}
+
+.priority-buttons {
+  display: flex;
+  gap: 10px;
+  flex: 3;
+}
+
+.priority-button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 70px;
+}
+
+.priority-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.priority-icon {
+  font-size: 24px;
+  margin-bottom: 6px;
+}
+
+.priority-text {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.priority-button-low {
+  background-color: #28a745;
+  color: white;
+}
+
+.priority-button-medium {
+  background-color: #ffc107;
+  color: #333;
+}
+
+.priority-button-urgent {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Styles pour la grille de médecins */
+.medecin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 700px;
+}
+
+.medecin-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.medecin-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.medecin-info {
+  margin-bottom: 15px;
+}
+
+.medecin-name {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+}
+
+.medecin-name a {
+  color: #333;
+  text-decoration: none;
+}
+
+.medecin-name a:hover {
+  color: #007bff;
+}
+
+.medecin-specialite {
+  color: #666;
+  margin: 5px 0;
+}
+
+.medecin-details {
+  color: #666;
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.medecin-actions .btn-primary {
+  flex: 1;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}

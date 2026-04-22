@@ -78,6 +78,13 @@ class Medecin(models.Model):
         default=10,
         verbose_name="Nombre maximum de patients par jour"
     )
+    suggestions_config = models.JSONField(
+    blank=True,
+    null=True,
+    verbose_name="Configuration des suggestions",
+    default=dict,
+    help_text="Configuration des suggestions pré-définies pour les boutons de priorité"
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Date de création"

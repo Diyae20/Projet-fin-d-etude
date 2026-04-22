@@ -4,6 +4,7 @@ import { userService } from '../services/userService';
 import { useAuth } from '../contexts/AuthContext';
 import Loading from '../components/Loading';
 import Alert from '../components/Alert';
+import './RendezvousList.css';
 
 const RendezvousList = () => {
   const { user, updateUser } = useAuth();
@@ -230,7 +231,9 @@ const RendezvousList = () => {
       {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
       <div className="dashboard-sections">
-        <div className="dashboard-section">
+        <div className="dashboard-container">
+          <div className="dashboard-content">
+            <div className="dashboard-section">
           <div className="card">
             <h2>Mes Informations</h2>
 
@@ -448,6 +451,8 @@ const RendezvousList = () => {
               </div>
             )}
           </div>
+            </div>
+          </div>
         </div>
 
         <div className="dashboard-section">
@@ -470,14 +475,17 @@ const RendezvousList = () => {
                         })} à {rdv.heure}
                       </div>
                       <div className="rendezvous-medecin">
-                        👨‍⚕️ Dr. {rdv.medecin_nom}
+                        👨‍⚕️ Dr. {rdv.medecin ? `${rdv.medecin.first_name} ${rdv.medecin.last_name}` : rdv.medecin_nom || 'N/A'}
                       </div>
-
-                      <span className={`rendezvous-statut ${getStatutClass(rdv.statut)}`}>
+                      {rdv.type_consultation === 'consultation' && (
+                        <div className="rendezvous-motif">
+                          📋 Consultation
+                        </div>
+                      )}
+                        <span className={`rendezvous-statut ${getStatutClass(rdv.statut)}`}>
                         {getStatutLabel(rdv.statut)}
                       </span>
                     </div>
-
                     {rdv.statut === 'confirme' || rdv.statut === 'en_attente' ? (
                       <button
                         className="btn btn-danger"
@@ -487,15 +495,15 @@ const RendezvousList = () => {
                         {cancellingId === rdv.id ? 'Annulation...' : 'Annuler'}
                       </button>
                     ) : null}
-                  </div>
-                ))}
+                      </div>
+                    ))}
+                   </div>
+                 )}
+                 </div>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
+            </div>
+        );
+       };
+                
 export default RendezvousList;

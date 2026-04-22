@@ -48,18 +48,20 @@ class RendezVousListView(generics.ListCreateAPIView):
         """
         Créer un rendez-vous avec l'utilisateur connecté comme patient
         """
+        print(f"Utilisateur connecté: {self.request.user}")
+        print(f"Est patient: {self.request.user.is_patient}")
+        print(f"Données reçues: {self.request.data}")
+        
         if not self.request.user.is_patient:
             return Response({
                 'error': 'Seuls les patients peuvent créer des rendez-vous'
             }, status=status.HTTP_403_FORBIDDEN)
 
-        medecin_id = self.request.data.get('medecin_id')
-        if not medecin_id:
-            return Response({
-                'error': 'Veuillez spécifier un médecin'
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        serializer.save(patient=self.request.user)
+        # Le sérialiseur gère déjà l'attribution du patient et du médecin
+        print(f"Tentative de création de rendez-vous avec le sérialiseur")
+        result = serializer.save()
+        print(f"Rendez-vous créé: {result}")
+        return result
 
 
 class RendezVousDetailView(generics.RetrieveUpdateDestroyAPIView):

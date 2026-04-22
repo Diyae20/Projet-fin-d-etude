@@ -123,6 +123,18 @@ class MedecinProfileView(generics.RetrieveUpdateAPIView):
         specialite_nom = self.request.data.get('specialite_nom')
         remove_photo = self.request.data.get('remove_photo')
 
+        # Gérer les suggestions_config
+        suggestions_config = self.request.data.get('suggestions_config')
+        if suggestions_config:
+            # Si c'est une chaîne JSON, la convertir en objet
+            if isinstance(suggestions_config, str):
+                import json
+                try:
+                    suggestions_config = json.loads(suggestions_config)
+                except json.JSONDecodeError:
+                    pass
+            serializer.instance.suggestions_config = suggestions_config
+
         # Si un nom de spécialité est fourni, essayer de trouver ou créer la spécialité
         if specialite_nom:
             try:

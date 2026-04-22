@@ -6,7 +6,9 @@ from .views import (
     UserRegistrationView,
     UserLoginView,
     UserLogoutView,
-    ResetPasswordView
+    ResetPasswordView,
+    ChangePasswordView,
+    DeleteAccountView
 )
 
 urlpatterns = [
@@ -14,4 +16,6 @@ urlpatterns = [
     path('login/', csrf_exempt(UserLoginView.as_view()), name='user-login'),
     path('logout/', csrf_exempt(UserLogoutView.as_view()), name='user-logout'),
     path('reset-password/', csrf_exempt(ResetPasswordView.as_view()), name='reset-password'),
+    path('change-password/', csrf_exempt(ChangePasswordView.as_view()), name='change-password'),
+    path('delete-account/', csrf_exempt(DeleteAccountView.as_view()), name='delete-account'),
 ]

@@ -12,7 +12,7 @@ const ReceptionRendezvousList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedRendezvous, setSelectedRendezvous] = useState(null);
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     fetchRendezvous();
@@ -156,7 +156,7 @@ const ReceptionRendezvousList = () => {
                   </thead>
                   <tbody>
                     {filteredRendezvous.map(rv => (
-                      <tr key={rv.id} style={{verticalAlign: 'middle'}}>
+                      <tr key={rv.id} style={{verticalAlign: 'middle', backgroundColor: rv.priorite === 'basse' ? '#d4edda' : 'transparent'}}>
                         <td style={{padding: '12px 15px'}}>
                           <div style={{fontWeight: '500'}}>
                             {rv.patient ? `${rv.patient.first_name || ''} ${rv.patient.last_name || ''}` : 'N/A'}

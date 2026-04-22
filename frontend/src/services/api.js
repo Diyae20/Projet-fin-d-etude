@@ -28,12 +28,14 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // Gérer les erreurs 401 (non autorisé)
-    if (error.response && error.response.status === 401) {
-      // Rediriger vers la page de connexion
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+    // Gérer les erreurs 401 (non autorisé) uniquement si ce n'est pas une requête de login
+    if (error.response && error.response.status === 401 && !error.config.url.includes('/login')) {
+      // Rediriger vers la page de connexion uniquement si nous ne sommes pas déjà sur cette page
+      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

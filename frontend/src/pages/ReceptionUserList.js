@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Alert from '../components/Alert';
+import './ReceptionUserList.css';
 
 const ReceptionUserList = () => {
   const [users, setUsers] = useState([]);
@@ -56,15 +57,28 @@ const ReceptionUserList = () => {
   };
 
   const handleDelete = async (userId) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+    if (!window.confirm('Êtes-vous sûr de vouloir désactiver ce patient ? Son compte restera actif pour qu\'il puisse se connecter.')) {
       return;
     }
 
     try {
-      await api.delete(`/users/reception/users/${userId}/`);
-      setUsers(users.filter(user => user.id !== userId));
+      // Récupérer les rendez-vous du patient
+      const rendezvousResponse = await api.get(`/rendezvous/?patient=${userId}`);
+      const rendezvous = rendezvousResponse.data.results || rendezvousResponse.data;
+      
+      // Supprimer tous les rendez-vous du patient
+      for (const rdv of rendezvous) {
+        await api.delete(`/rendezvous/${rdv.id}/`);
+      }
+      
+      // Désactiver le patient au lieu de le supprimer
+      await api.patch(`/users/reception/users/${userId}/`, { visible_for_reception: false, is_active: true });
+
+      // Recharger la liste des utilisateurs depuis le serveur
+      await fetchUsers();
+      setError('');
     } catch (error) {
-      setError("Erreur lors de la suppression de l'utilisateur.");
+      setError("Erreur lors de la désactivation du patient.");
     }
   };
 
