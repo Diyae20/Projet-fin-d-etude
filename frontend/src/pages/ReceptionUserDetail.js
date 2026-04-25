@@ -295,15 +295,6 @@ const ReceptionUserDetail = () => {
 
         <div className="mt-4">
           <div className="d-flex gap-2">
-            {/* Bouton vert Consultation - toujours affiché */}
-            <button
-              className="btn btn-success"
-              onClick={() => navigate(`/reception/rendezvous/new?patient=${id}`)}
-              style={{minWidth: '100px'}}
-            >
-              Consultation
-            </button>
-
             {/* Bouton jaune - affiché seulement si le patient a déjà eu des rendez-vous */}
             {rendezvous.length > 0 && (
               <button
@@ -314,15 +305,6 @@ const ReceptionUserDetail = () => {
                 Suivi
               </button>
             )}
-
-            {/* Bouton rouge - toujours affiché */}
-            <button
-              className="btn btn-danger"
-              onClick={handleDelete}
-              style={{minWidth: '100px'}}
-            >
-              Supprimer
-            </button>
           </div>
         </div>
       </div>

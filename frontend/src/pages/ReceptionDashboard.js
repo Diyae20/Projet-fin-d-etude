@@ -17,6 +17,7 @@ const ReceptionDashboard = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [patientsWithRendezvous, setPatientsWithRendezvous] = useState([]); 
 
   useEffect(() => {
     fetchDashboardStats();
@@ -27,6 +28,26 @@ const ReceptionDashboard = () => {
       setLoading(true);
       const response = await api.get('/users/reception/dashboard/');
       setStats(response.data);
+      const rendezvousResponse = await api.get('/users/reception/rendezvous/');
+      const rendezvousData = rendezvousResponse.data.results || rendezvousResponse.data;
+
+
+      const patientsMap = new Map();
+      if (Array.isArray(rendezvousData)) {
+        rendezvousData.forEach(rdv => {
+          if (rdv.patient && !patientsMap.has(rdv.patient.id)) {
+            patientsMap.set(rdv.patient.id, rdv.patient);
+          }
+        });
+      }
+
+      const patients = Array.from(patientsMap.values());
+      setPatientsWithRendezvous(patients);
+
+      setStats(prevStats => ({
+        ...prevStats,
+        total_patients: patients.length
+      }));
     } catch (error) {
       if (error.response && error.response.status === 403) {
         setError('Accès non autorisé. Vous devez être connecté en tant que réception.');

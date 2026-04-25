@@ -12,10 +12,15 @@ const ReceptionUserList = () => {
   const [filter, setFilter] = useState('patient');
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  
 
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [filter, searchTerm]);
 
   useEffect(() => {
     filterUsers();
@@ -24,9 +29,27 @@ const ReceptionUserList = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/users/reception/users/');
-      console.log('Réponse de l\'API:', response.data);
-      setUsers(Array.isArray(response.data) ? response.data : []);
+      const rendezvousResponse = await api.get('/users/reception/rendezvous/');
+      console.log('Réponse de l\'API rendezvous:', rendezvousResponse.data);
+      
+      const rendezvousData = rendezvousResponse.data.results || rendezvousResponse.data;
+
+      const patientsMap = new Map();
+
+      if (Array.isArray(rendezvousData)) {
+        rendezvousData.forEach(rdv => {
+          if (rdv.patient && rdv.patient.id && !patientsMap.has(rdv.patient.id)) {
+            patientsMap.set(rdv.patient.id, {
+              ...rdv.patient,
+              medecin : rdv.medecin
+            });
+          }
+        });
+      }
+      
+      const patients = Array.from(patientsMap.values());
+      console.log('Patients avec rendez-vous:', patients);
+      setUsers(patients);
     } catch (error) {
       if (error.response && error.response.status === 403) {
         setError('Accès non autorisé. Vous devez être connecté en tant que réception.');

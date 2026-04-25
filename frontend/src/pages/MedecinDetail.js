@@ -7,46 +7,7 @@ import Loading from '../components/Loading';
 import Alert from '../components/Alert';
 import Modal from '../components/Modal';
 
-// Suggestions pré-définies pour chaque type de bouton
-const suggestionsPredefinies = {
-  vert: [
-    { id: 'v1', text: 'Consultation', description: 'Consultation dentaire générale' }
-  ],
-  jaune: [
-    { id: 'j1', text: 'Suivi post-traitement', description: 'Après un traitement (plombage, couronne, extraction), le patient a mal ou des sensations inhabituelles qui ne sont pas urgentes mais nécessitent un contrôle' },
-    { id: 'j2', text: 'Ajustement d\'appareil', description: 'Le patient a un appareil dentaire (orthodontie, prothèse) qui gêne ou blesse légèrement' },
-    { id: 'j3', text: 'Douleur légère à modérée', description: 'Le patient ressent une douleur supportable qui n\'empêche pas ses activités quotidiennes' },
-    { id: 'j4', text: 'Question sur un traitement en cours', description: 'Le patient a des interrogations sur son traitement ou des effets secondaires mineurs' },
-    { id: 'j5', text: 'Sensibilité dentaire', description: 'Sensibilité au chaud/froid ou sucré qui apparaît progressivement' },
-    { id: 'j6', text: 'Petite complication', description: 'Une petite fissure, un écaillage de plombage qui ne cause pas de douleur intense' },
-    { id: 'j7', text: 'Sensibilité dentaire', description: 'Douleur légère lors de la consommation d\'aliments chauds/froids ou sucrés' },
-    { id: 'j8', text: 'Gêne après traitement', description: 'Sensation d\'inconfort après un plombage, couronne ou dévitalisation' },
-    { id: 'j9', text: 'Petite fracture', description: 'Une petite partie de la dent s\'est cassée mais sans douleur intense' },
-    { id: 'j10', text: 'Plombage décollé', description: 'Un plombage est parti mais sans douleur intense' },
-    { id: 'j11', text: 'Gencives qui saignent légèrement', description: 'Saignement mineur lors du brossage' },
-    { id: 'j12', text: 'Mauvaise haleine persistante', description: 'Problème d\'halitose qui incommode le patient' },
-    { id: 'j13', text: 'Petit kyste ou aphte', description: 'Légère gêne mais pas de douleur intense' },
-    { id: 'j14', text: 'Question sur un médicament', description: 'Le patient a des questions sur les médicaments prescrits' },
-    { id: 'j15', text: 'Douleur légère à la mâchoire', description: 'Légère tension ou douleur à la mâchoire, peut-être liée à l\'articulation' }
-  ],
-  rouge: [
-    { id: 'r1', text: 'Douleur intense et insupportable', description: 'Douleur aiguë qui empêche le patient de dormir ou de vaquer à ses activités normales' },
-    { id: 'r2', text: 'Traumatisme dentaire', description: 'Dent cassée, arrachée ou déplacée suite à un choc' },
-    { id: 'r3', text: 'Infection avancée', description: 'Gonflement important du visage, fièvre, douleur pulsatile, signes d\'abcès' },
-    { id: 'r4', text: 'Saignement important', description: 'Saignement qui ne s\'arrête pas après une extraction ou un traumatisme' },
-    { id: 'r5', text: 'Réaction allergique sévère', description: 'Gonflement des lèvres, de la langue, difficulté à respirer suite à un traitement ou médicament' },
-    { id: 'r6', text: 'Douleur accompagnée de fièvre', description: 'Douleur dentaire avec fièvre élevée, signe d\'une infection qui se propage' },
-    { id: 'r7', text: 'Dent cassée avec nerf exposé', description: 'Fracture importante avec douleur vive' },
-    { id: 'r8', text: 'Abcès dentaire', description: 'Infection purulente avec gonflement du visage' },
-    { id: 'r9', text: 'Hémorragie importante', description: 'Saignement continu qui ne s\'arrête pas après une extraction' },
-    { id: 'r10', text: 'Gonflement important du visage', description: 'Œdème significatif qui peut affecter la respiration ou la déglutition' },
-    { id: 'r11', text: 'Fièvre élevée avec douleur dentaire', description: 'Signe d\'infection qui se propage' },
-    { id: 'r12', text: 'Couronne ou bridge tombé', description: 'Prothèse qui est tombée avec douleur intense' },
-    { id: 'r13', text: 'Douleur irradiante', description: 'Douleur qui se propage à l\'oreille, au cou ou à la tête' },
-    { id: 'r14', text: 'Difficulté à ouvrir la bouche', description: 'Trismus important empêchant d\'ouvrir la bouche normalement' },
-    { id: 'r15', text: 'Perte de sensation', description: 'Engourdissement ou perte de sensibilité après un traitement' }
-  ]
-};
+
 
 // Composant Calendrier pour la sélection de date
 const Calendar = ({ selectedDate, onDateChange, availableDates, disponibilitesParJour }) => {
@@ -530,46 +491,7 @@ const MedecinDetail = () => {
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
         {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
 
-        {/* Afficher les boutons de priorité si le médecin a configuré les suggestions correspondantes */}
-        {medecin.suggestions_config && (
-          <div className="priority-buttons" style={{ marginBottom: '20px' }}>
-            {/* Bouton vert (Consultation) - affiché seulement si le médecin a configuré des suggestions pour le bouton vert */}
-            {medecin.suggestions_config.vert && medecin.suggestions_config.vert.length > 0 && (
-              <button
-                className={`priority-button priority-button-low ${selectedPriority === 'basse' ? 'selected' : ''}`}
-                onClick={() => handlePrioritySelect('basse')}
-                title="Prendre rendez-vous pour une consultation de routine"
-                >
-                  <span className="priority-icon">📅</span>
-                   <span className="priority-text">Consultation</span>
-                </button>
-            )}
-
-              {/* Bouton jaune (Suivi) - affiché seulement si le médecin a configuré des suggestions pour le bouton jaune */}
-              {medecin.suggestions_config.jaune && medecin.suggestions_config.jaune.length > 0 && (
-                <button
-                   className={`priority-button priority-button-medium ${selectedPriority === 'moyenne' ? 'selected' : ''}`}
-                   onClick={() => handlePrioritySelect('moyenne')}
-                   title="Prendre rendez-vous pour un suivi ou une consultation non urgente"
-                >
-                <span className="priority-icon">⏰</span>
-                <span className="priority-text">Suivi</span>
-                </button>
-              )}
-
-              {/* Bouton rouge (Urgence) - affiché seulement si le médecin a configuré des suggestions pour le bouton rouge */}
-              {medecin.suggestions_config.rouge && medecin.suggestions_config.rouge.length > 0 && (
-                <button
-                  className={`priority-button priority-button-urgent ${selectedPriority === 'urgente' ? 'selected' : ''}`}
-                  onClick={() => handlePrioritySelect('urgente')}
-                  title="Prendre rendez-vous en cas d'urgence"
-                >
-                  <span className="priority-icon">🚑</span>
-                  <span className="priority-text">Urgence</span>
-                </button>
-              )}
-          </div>
-        )}
+        {/* Les boutons de priorité ont été supprimés */}
 
         <div className="form-group">
           <label htmlFor="date">Date</label>
@@ -630,32 +552,6 @@ const MedecinDetail = () => {
             {medecin.suggestions_config[selectedPriorityType].map(suggestionId => {
               // Trouver la suggestion correspondante dans les suggestions pré-définies
               let suggestion = null;
-              if (selectedPriorityType === 'vert') {
-                suggestion = suggestionsPredefinies.vert.find(s => s.id === suggestionId);
-              } else if (selectedPriorityType === 'jaune') {
-                suggestion = suggestionsPredefinies.jaune.find(s => s.id === suggestionId);
-              } else if (selectedPriorityType === 'rouge') {
-                suggestion = suggestionsPredefinies.rouge.find(s => s.id === suggestionId);
-              }
-              
-              if (!suggestion) return null;
-              
-              return (
-                <div
-                  key={suggestion.id}
-                  className="suggestion-item"
-                  style={{
-                    padding: '15px',
-                    marginBottom: '10px',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    backgroundColor: selectedPriorityType === 'vert' ? '#e8f5e9' : selectedPriorityType === 'jaune' ? '#fff8e1' : '#ffebee'
-                  }}
-                >
-                  <h4 style={{ margin: '0 0 5px 0', fontSize: '1.1rem' }}>{suggestion.text}</h4>
-                  <p style={{ margin: '0', fontSize: '0.9rem', color: '#666' }}>{suggestion.description}</p>
-                </div>
-              );
             })}
           </div>
         )}
