@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Alert from '../components/Alert';
+import CreneauHoraireManager from '../components/CreneauHoraireManager';
 
 const ReceptionMedecinDetail = () => {
   const { id } = useParams();
@@ -226,7 +227,7 @@ const ReceptionMedecinDetail = () => {
                     />
                   </div>
                   <div className="col-md-6 mb-3">
-                    <label className="form-label">Durée de consultation (minutes)</label>
+                    <label className="form-label">Durée moyenne pour chaque patient (minutes)</label>
                     <input
                       type="number"
                       className="form-control"
@@ -305,7 +306,7 @@ const ReceptionMedecinDetail = () => {
                   <strong>Ville:</strong> {medecin.ville || 'Non renseigné'}
                 </div>
                 <div className="col-md-6 mb-3">
-                  <strong>Durée de consultation:</strong> {medecin.duree_consultation} minutes
+                  <strong>Durée moyenne pour chaque patient:</strong> {medecin.duree_consultation} minutes
                 </div>
                 <div className="col-md-6 mb-3">
                   <strong>Max patients par jour:</strong> {medecin.max_patients_par_jour}
@@ -325,6 +326,8 @@ const ReceptionMedecinDetail = () => {
             )}
           </div>
         </div>
+
+        <CreneauHoraireManager medecinId={id} />
 
         <div className="mt-4">
           <button

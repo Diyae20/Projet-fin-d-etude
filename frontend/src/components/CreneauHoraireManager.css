@@ -1,0 +1,167 @@
+
+/* Styles pour le gestionnaire de créneaux horaires */
+.creneau-horaire-manager {
+  margin-top: 20px;
+}
+
+.creneau-horaire-manager .card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e9ecef;
+}
+
+.creneau-horaire-manager .card-body {
+  padding: 25px;
+}
+
+.creneau-horaire-manager h4 {
+  color: #2c3e50;
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+
+.creneau-horaire-manager .table {
+  margin-bottom: 0;
+}
+
+.creneau-horaire-manager .table th {
+  background-color: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
+  padding: 12px;
+}
+
+.creneau-horaire-manager .table td {
+  vertical-align: middle;
+  padding: 12px;
+}
+
+.creneau-horaire-manager .form-check-input {
+  width: 1.2em;
+  height: 1.2em;
+  cursor: pointer;
+}
+
+.creneau-horaire-manager .form-check-label {
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+.creneau-horaire-manager .badge {
+  padding: 6px 12px;
+  font-weight: 500;
+  border-radius: 6px;
+}
+
+.creneau-horaire-manager .badge-success {
+  background-color: #28a745;
+}
+
+.creneau-horaire-manager .badge-danger {
+  background-color: #dc3545;
+}
+
+.creneau-horaire-manager input[type="time"] {
+  padding: 6px 10px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.creneau-horaire-manager input[type="time"]:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+.creneau-horaire-manager .btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.creneau-horaire-manager .btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.creneau-horaire-manager .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.creneau-horaire-manager .btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.creneau-horaire-manager .btn-primary:hover {
+  background-color: #0069d9;
+  border-color: #0062cc;
+}
+
+.creneau-horaire-manager .btn-success {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.creneau-horaire-manager .btn-success:hover {
+  background-color: #218838;
+  border-color: #1e7e34;
+}
+
+.creneau-horaire-manager .btn-secondary {
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.creneau-horaire-manager .btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
+
+.creneau-horaire-manager .table-responsive {
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #dee2e6;
+}
+
+.creneau-horaire-manager .alert {
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.creneau-horaire-manager .d-flex {
+  display: flex;
+}
+
+.creneau-horaire-manager .justify-content-between {
+  justify-content: space-between;
+}
+
+.creneau-horaire-manager .align-items-center {
+  align-items: center;
+}
+
+.creneau-horaire-manager .gap-2 {
+  gap: 8px;
+}
+
+.creneau-horaire-manager .mt-4 {
+  margin-top: 24px;
+}
+
+.creneau-horaire-manager .mt-3 {
+  margin-top: 16px;
+}
+
+.creneau-horaire-manager .mb-4 {
+  margin-bottom: 24px;
+}
+
+.creneau-horaire-manager .text-center {
+  text-align: center;
+}

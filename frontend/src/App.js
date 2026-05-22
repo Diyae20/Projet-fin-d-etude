@@ -11,6 +11,7 @@ import MedecinDashboard from './pages/MedecinDashboard';
 import MedecinPatients from './pages/MedecinPatients';
 import SuggestionsConfig from './pages/SuggestionsConfig';
 import RendezvousList from './pages/RendezvousList';
+import PatientRendezvousHistory from './pages/PatientRendezvousHistory';
 import ChangePassword from './pages/ChangePassword';
 import DeleteAccount from './pages/DeleteAccount';
 import ResetPassword from './pages/ResetPassword';
@@ -22,12 +23,14 @@ import ReceptionMedecinDetail from './pages/ReceptionMedecinDetail';
 import ReceptionRendezvousList from './pages/ReceptionRendezvousList';
 import ReceptionRendezvousDetail from './pages/ReceptionRendezvousDetail';
 import ProtectedRoute from './components/ProtectedRoute';
+import UrgentNotificationAlert from './components/UrgentNotificationAlert';
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <div className="app">
+          <UrgentNotificationAlert />
           <Navbar />
           <div className="container">
             <Routes>
@@ -80,6 +83,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <RendezvousList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/patient/rendezvous/history"
+                element={
+                  <ProtectedRoute>
+                    <PatientRendezvousHistory />
                   </ProtectedRoute>
                 }
               />

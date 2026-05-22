@@ -86,13 +86,70 @@ const MedecinList = () => {
 
   const fetchUserRendezvous = async () => {
     try {
-      const result = await rendezvousService.getRendezvous();
+      // Récupérer tous les rendez-vous, y compris ceux passés
+      const result = await rendezvousService.getAllRendezvousIncludingPast();
       if (result.success) {
-        setUserRendezvous(result.data.results || result.data);
+        const rendezvous = result.data.results || result.data;
+        setUserRendezvous(rendezvous);
+        console.log("DEBUG - Tous les rendez-vous du patient:", rendezvous);
       }
     } catch (error) {
       console.error("Erreur lors du chargement des rendez-vous:", error);
     }
+  };
+
+  // Fonction de débogage pour vérifier si un patient a un rendez-vous passé avec un médecin
+  const hasPastAppointmentWithMedecin = (medecin) => {
+    console.log("DEBUG - Medecin:", medecin);
+    console.log("DEBUG - Tous les rendez-vous du patient:", userRendezvous);
+    
+    // Afficher les détails de chaque rendez-vous pour comprendre la structure
+    userRendezvous.forEach(rdv => {
+      console.log("DEBUG - Rendez-vous:", rdv);
+      console.log("DEBUG - rdv.medecin:", rdv.medecin);
+      console.log("DEBUG - rdv.medecin_id:", rdv.medecin_id);
+      console.log("DEBUG - rdv.medecin?.id:", rdv.medecin?.id);
+      console.log("DEBUG - rdv.medecin?.user?.id:", rdv.medecin?.user?.id);
+    });
+    
+    const medecinRendezvous = userRendezvous.filter(rdv => {
+      // Essayer différentes façons d'accéder à l'ID du médecin
+      const medecinIdFromRdv = rdv.medecin?.id || rdv.medecin?.user?.id || rdv.medecin_id;
+      console.log("DEBUG - ID du médecin dans le rendez-vous:", medecinIdFromRdv, "ID du médecin recherché:", medecin.id);
+      
+      // Vérifier si les ID correspondent
+      if (medecinIdFromRdv === medecin.id) {
+        return true;
+      }
+      
+      // Si les ID ne correspondent pas, vérifier si c'est le même médecin en comparant d'autres propriétés
+      if (rdv.medecin && typeof rdv.medecin === 'object') {
+        // Comparer par nom et prénom
+        const rdvMedecinName = `${rdv.medecin.first_name || ''} ${rdv.medecin.last_name || ''}`.toLowerCase();
+        const medecinName = (medecin.nom_complet || medecin.first_name + ' ' + medecin.last_name || '').toLowerCase();
+        console.log("DEBUG - Nom du médecin dans le rendez-vous:", rdvMedecinName, "Nom du médecin recherché:", medecinName);
+        return rdvMedecinName === medecinName;
+      }
+      
+      return false;
+    });
+    console.log("DEBUG - Rendez-vous avec ce médecin:", medecinRendezvous);
+    
+    const hasPastAppointment = medecinRendezvous.some(rdv => {
+      const rdvDate = new Date(rdv.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      console.log("DEBUG - Rendez-vous:", rdv);
+      console.log("DEBUG - Date du rendez-vous:", rdvDate);
+      console.log("DEBUG - Date d'aujourd'hui:", today);
+      console.log("DEBUG - Statut du rendez-vous:", rdv.statut);
+      // Un rendez-vous est considéré comme passé si son statut est "passe", quelle que soit sa date
+      const isPast = rdv.statut === 'passe';
+      console.log("DEBUG - Est passé:", isPast);
+      return isPast;
+    });
+    console.log("DEBUG - A un rendez-vous passé:", hasPastAppointment);
+    return hasPastAppointment;
   };
 
   const fetchMedecins = async () => {
@@ -204,7 +261,7 @@ const MedecinList = () => {
     setShowSuggestionsModal(true);
   };
   
-  const handleAutoBooking = async () => {
+    const handleAutoBooking = async () => {
   if (!selectedMedecin) return;
 
   setLoadingBooking(true);
@@ -212,44 +269,109 @@ const MedecinList = () => {
   setBookingSuccess('');
 
   try {
-    // Trouver le premier créneau disponible à partir de 3 jours
-    const inThreeDays = new Date();
-    inThreeDays.setDate(inThreeDays.getDate() + 3);
+    // Déterminer la date de début et le message d'erreur en fonction du type de priorité
+    let startDate;
+    let errorMessage;
 
-    const slot = await findFirstAvailableSlot(selectedMedecin.id, inThreeDays);
-
-    if (!slot) {
-      setBookingError('Aucun créneau disponible dans 3 jours pour ce médecin.');
-      setLoadingBooking(false);
-      return;
+    if (selectedPriorityType === 'jaune') {
+      // Pour le bouton jaune (Suivi): rechercher à partir de 1 jour
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() + 1);
+      errorMessage = 'Aucun créneau disponible dans les 7 prochains jours pour ce médecin. Veuillez contacter le cabinet directement pour un rendez-vous de suivi.';
+    } else {
+      // Pour les autres types: rechercher à partir de 3 jours
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() + 3);
+      errorMessage = 'Aucun créneau disponible dans 3 jours pour ce médecin.';
     }
 
-    // Déterminer la priorité en fonction du type sélectionné
+    // Utiliser l'ID de l'utilisateur du médecin car le champ medecin dans le modèle RendezVous est un ForeignKey vers User
+    const medecinUserId = selectedMedecin.user?.id || selectedMedecin.id;
+
+    // Déterminer la priorité et le type de consultation en fonction du type sélectionné
     let priority = 'basse';
-    if (selectedPriorityType === 'jaune') priority = 'moyenne';
-    else if (selectedPriorityType === 'rouge') priority = 'urgente';
+    let typeConsultation = null;
 
-    // Créer le rendez-vous avec la priorité sélectionnée
-    const rendezvousData = {
-      medecin_id: selectedMedecin.user.id,
-      patient_id: user.id,
-      date: slot.date,
-      heure: slot.heure,
-      type_consultation: 'consultation',
-      priorite: priority
-    };
-    
-    const result = await rendezvousService.createRendezvous(rendezvousData);
+    if (selectedPriorityType === 'vert') {
+      priority = 'basse';
+      typeConsultation = 'consultation';
+    } else if (selectedPriorityType === 'jaune') {
+      priority = 'moyenne';
+      typeConsultation = 'suivi';
+    } else if (selectedPriorityType === 'rouge') {
+      priority = 'urgente';
+    }
 
-    if (result.success) {
-      setBookingSuccess(`Rendez-vous créé avec succès pour le ${slot.date} à ${slot.heure} !`);
-      // Fermer le modal après un délai
-      setTimeout(() => {
-        setShowSuggestionsModal(false);
-        setBookingSuccess('');
-      }, 3000);
+    // Pour les priorités moyenne (jaune) et urgente (rouge), utiliser priorityBooking
+    if (selectedPriorityType === 'jaune' || selectedPriorityType === 'rouge') {
+      // Déterminer le déai en jours selon le type de priorité
+      const delayDays = selectedPriorityType === 'jaune' ? 1 : 0;
+      
+      let result;
+      
+      if (selectedPriorityType === 'rouge') {
+        // Pour le bouton rouge (urgence), utiliser emergencyBooking qui recherche le créneau le plus proche le jour même
+        // et échange directement un rendez-vous de priorité basse si nécessaire
+        result = await rendezvousService.emergencyBooking(
+          medecinUserId,
+          user.id,
+          priority,
+          typeConsultation
+        );
+      } else {
+        // Pour le bouton jaune (suivi), utiliser priorityBooking avec un délai de 1 jour
+        result = await rendezvousService.priorityBooking(
+          medecinUserId,
+          user.id,
+          priority,
+          typeConsultation,
+          delayDays
+        );
+      }
+
+      if (result.success) {
+        setBookingSuccess(`Rendez-vous créé avec succès pour le ${result.data.rendezvous.date} à ${result.data.rendezvous.heure} ! Un rendez-vous a été réorganisé pour vous permettre d'obtenir ce créneau.`);
+        // Fermer le modal après un délai
+        setTimeout(() => {
+          setShowSuggestionsModal(false);
+          setBookingSuccess('');
+        }, 5000); // Augmenter le délai à 5 secondes pour permettre la lecture du message
+      } else {
+        console.error('Erreur détaillée:', result.error);
+        setBookingError(result.error || errorMessage);
+      }
     } else {
-      setBookingError(result.error || 'Erreur lors de la création du rendez-vous.');
+      // Pour la priorité basse (vert), utiliser l'approche normale
+      const slot = await findFirstAvailableSlot(medecinUserId, startDate, false);
+
+      if (!slot) {
+        setBookingError(errorMessage);
+        setLoadingBooking(false);
+        return;
+      }
+
+      // Créer le rendez-vous avec la priorité et le type de consultation sélectionnés
+      const rendezvousData = {
+        medecin_id: medecinUserId,
+        patient_id: user.id,
+        date: slot.date,
+        heure: slot.heure,
+        type_consultation: typeConsultation,
+        priorite: priority
+      };
+
+      const result = await rendezvousService.createRendezvous(rendezvousData);
+
+      if (result.success) {
+        setBookingSuccess(`Rendez-vous créé avec succès pour le ${slot.date} à ${slot.heure} !`);
+        // Fermer le modal après un délai
+        setTimeout(() => {
+          setShowSuggestionsModal(false);
+          setBookingSuccess('');
+        }, 5000); // Augmenter le délai à 5 secondes pour permettre la lecture du message
+      } else {
+        setBookingError(result.error || 'Erreur lors de la création du rendez-vous.');
+      }
     }
   } catch (error) {
     setBookingError('Une erreur est survenue lors de la création du rendez-vous.');
@@ -257,6 +379,7 @@ const MedecinList = () => {
     setLoadingBooking(false);
   }
 };
+
 
 const handleCloseSuggestionsModal = () => {
   setShowSuggestionsModal(false);
@@ -274,28 +397,219 @@ const handleCloseSuggestionsModal = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const findFirstAvailableSlot = async (medecinId, startDate) => {
-    // Chercher le premier créneau disponible dans les 3 prochains jours
-    const maxDays = 3;
+  const findFirstAvailableSlot = async (medecinId, startDate, isYellowButton = false) => {
+    // Pour le bouton jaune, chercher dans les 1 jour suivant au lieu de 3 jours
+    const maxDays = isYellowButton ? 1 : 3;
     let currentDate = new Date(startDate);
+
+    // Récupérer les informations du médecin pour vérifier s'il travaille le samedi
+    // medecinId est l'ID de l'utilisateur du médecin, on cherche donc par user.id
+    const medecin = medecins.find(m => m.user?.id === medecinId || m.id === medecinId);
+    const travailleSamedi = medecin && medecin.travaille_samedi === true;
+
+    console.log('findFirstAvailableSlot - medecinId:', medecinId, 'startDate:', startDate, 'isYellowButton:', isYellowButton);
+    console.log('findFirstAvailableSlot - medecin:', medecin, 'travailleSamedi:', travailleSamedi);
 
     for (let day = 0; day < maxDays; day++) {
       // Ignorer les dimanches (jour 0 de la semaine)
       if (currentDate.getDay() === 0) {
+        console.log('findFirstAvailableSlot - Ignorant dimanche:', formatDateForAPI(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+        continue;
+      }
+
+      // Ignorer les samedis si le médecin ne travaille pas le samedi (jour 6 de la semaine)
+      if (currentDate.getDay() === 6 && !travailleSamedi) {
+        console.log('findFirstAvailableSlot - Ignorant samedi (médecin ne travaille pas le samedi):', formatDateForAPI(currentDate));
         currentDate.setDate(currentDate.getDate() + 1);
         continue;
       }
 
       const formattedDate = formatDateForAPI(currentDate);
+      console.log('findFirstAvailableSlot - Vérifiant créneaux pour:', formattedDate);
       const result = await rendezvousService.getCreneauxDisponibles(medecinId, formattedDate);
+      console.log('findFirstAvailableSlot - Résultat créneaux disponibles:', result);
+      console.log('findFirstAvailableSlot - result.success:', result.success);
+      console.log('findFirstAvailableSlot - result.data:', result.data);
+      console.log('findFirstAvailableSlot - result.data.creneaux:', result.data?.creneaux);
+      console.log('findFirstAvailableSlot - result.data.creneaux.length:', result.data?.creneaux?.length);
 
       if (result.success && result.data.creneaux && result.data.creneaux.length > 0) {
         // Retourner le premier créneau disponible de ce jour
         const firstCreneau = result.data.creneaux[0];
-        return {
-          date: formattedDate,
-          heure: typeof firstCreneau === 'object' ? firstCreneau.heure : firstCreneau
-        };
+        console.log('findFirstAvailableSlot - Créneau trouvé:', firstCreneau);
+        const creneauHeure = typeof firstCreneau === 'object' ? firstCreneau.heure : firstCreneau;
+        
+        // Vérifier que le créneau existe bien dans la liste des créneaux disponibles
+        const creneauExists = result.data.creneaux.some(creneau => creneau.heure === creneauHeure);
+        if (creneauExists) {
+          return {
+            date: formattedDate,
+            heure: creneauHeure
+          };
+        } else {
+          console.error('findFirstAvailableSlot - Erreur: Le créneau trouvé n\'existe pas dans la liste des créneaux disponibles');
+        }
+      }
+
+      // Pour le bouton jaune, si la date est complète (maximum de patients atteint),
+      // chercher un rendez-vous à échanger
+      if (isYellowButton && result.success && result.data.date_complete) {
+        console.log("findFirstAvailableSlot - Date complète, recherche d'un rendez-vous à échanger pour:", formattedDate);
+        return await findExchangeableAppointment(medecinId, currentDate);
+      }
+
+      // Passer au jour suivant
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Pour le bouton jaune, si aucun créneau n'est disponible dans le délai d'1 jour,
+    // chercher un rendez-vous à échanger
+    if (isYellowButton) {
+      console.log("findFirstAvailableSlot - Aucun créneau disponible pour le bouton jaune, recherche d'un rendez-vous à échanger");
+
+      // Vérifier d'abord s'il y a des rendez-vous pour ce médecin
+      const allRendezvous = await rendezvousService.getRendezvousByMedecinAndDate(medecinId, null);
+      if (allRendezvous.success && allRendezvous.data && allRendezvous.data.length > 0) {
+        console.log("findFirstAvailableSlot - Des rendez-vous existent pour ce médecin, recherche d'un rendez-vous à échanger");
+        return await findExchangeableAppointment(medecinId, startDate);
+      } else {
+        console.log("findFirstAvailableSlot - Aucun rendez-vous trouvé pour ce médecin, impossible d'échanger");
+      }
+    }
+
+    // Aucun créneau trouvé
+    console.log('findFirstAvailableSlot - Aucun créneau trouvé');
+    return null;
+  };
+
+  const findExchangeableAppointment = async (medecinId, startDate) => {
+    // Chercher un rendez-vous normal (priorité basse) qui peut être déplacé
+    // dans les 7 jours suivants
+    const maxDays = 7;
+    let currentDate = new Date(startDate);
+
+    // Récupérer les informations du médecin pour vérifier s'il travaille le samedi
+    // medecinId est l'ID de l'utilisateur du médecin, on cherche donc par user.id
+    const medecin = medecins.find(m => m.user?.id === medecinId || m.id === medecinId);
+    const travailleSamedi = medecin && medecin.travaille_samedi === true;
+
+    console.log('findExchangeableAppointment - medecinId:', medecinId, 'startDate:', startDate);
+    console.log('findExchangeableAppointment - medecin:', medecin, 'travailleSamedi:', travailleSamedi);
+
+    for (let day = 0; day < maxDays; day++) {
+      // Ignorer les dimanches (jour 0 de la semaine)
+      if (currentDate.getDay() === 0) {
+        console.log('findExchangeableAppointment - Ignorant dimanche:', formatDateForAPI(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+        continue;
+      }
+
+      // Ignorer les samedis si le médecin ne travaille pas le samedi (jour 6 de la semaine)
+      if (currentDate.getDay() === 6 && !travailleSamedi) {
+        console.log('findExchangeableAppointment - Ignorant samedi (médecin ne travaille pas le samedi):', formatDateForAPI(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+        continue;
+      }
+
+      const formattedDate = formatDateForAPI(currentDate);
+      console.log('findExchangeableAppointment - Vérifiant rendez-vous pour:', formattedDate);
+
+      // Récupérer tous les rendez-vous pour ce jour
+      const result = await rendezvousService.getRendezvousByMedecinAndDate(medecinId, formattedDate);
+
+      if (result.success && result.data) {
+        const rendezvousList = Array.isArray(result.data.results) ? result.data.results : result.data;
+        console.log('findExchangeableAppointment - Rendez-vous trouvés:', rendezvousList.length);
+        console.log('findExchangeableAppointment - Détails des rendez-vous:', rendezvousList);
+
+        // Chercher un rendez-vous avec priorité basse (consultation normale)
+        const normalAppointment = rendezvousList.find(rv => 
+          rv.priorite === 'basse' && rv.statut !== 'annule' && rv.statut !== 'passe'
+        );
+        console.log('findExchangeableAppointment - Rendez-vous de priorité basse trouvé:', normalAppointment);
+        console.log('findExchangeableAppointment - Structure du rendez-vous:', JSON.stringify(normalAppointment));
+
+      if (normalAppointment) {
+        console.log('findExchangeableAppointment - Rendez-vous échangeable trouvé:', normalAppointment.id);
+
+          // Trouver un nouveau créneau pour ce patient (le plus tôt possible)
+        const newSlotForPatient = await findFirstAvailableSlotForPatient(medecinId, normalAppointment.patient_id, formattedDate);
+
+        if (newSlotForPatient) {
+            // Retourner le créneau libéré pour le patient qui a demandé le suivi
+            // ainsi que les informations pour déplacer le rendez-vous de l'autre patient
+            return {
+              date: formattedDate,
+              heure: normalAppointment.heure,
+              exchangedAppointmentId: normalAppointment.id,
+              newDate: newSlotForPatient.date,
+              newHeure: newSlotForPatient.heure
+            };
+          }
+        }
+      }
+
+      // Passer au jour suivant
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Aucun rendez-vous échangeable trouvé
+    console.log('findExchangeableAppointment - Aucun rendez-vous échangeable trouvé');
+    return null;
+  };
+
+  const findFirstAvailableSlotForPatient = async (medecinId, patientId, originalDate) => {
+    // Chercher le premier créneau disponible pour le patient dont le rendez-vous a été déplacé
+    // en commençant par le lendemain de son rendez-vous original
+    const maxDays = 30; // Chercher dans les 30 prochains jours
+    let currentDate = new Date(originalDate);
+    currentDate.setDate(currentDate.getDate() + 1); // Commencer le lendemain
+
+    // Récupérer les informations du médecin pour vérifier s'il travaille le samedi
+    // medecinId est l'ID de l'utilisateur du médecin, on cherche donc par user.id
+    const medecin = medecins.find(m => m.user?.id === medecinId || m.id === medecinId);
+    const travailleSamedi = medecin && medecin.travaille_samedi === true;
+
+    console.log('findFirstAvailableSlotForPatient - medecinId:', medecinId, 'patientId:', patientId, 'originalDate:', originalDate);
+    console.log('findFirstAvailableSlotForPatient - medecin:', medecin, 'travailleSamedi:', travailleSamedi);
+
+    for (let day = 0; day < maxDays; day++) {
+      // Ignorer les dimanches (jour 0 de la semaine)
+      if (currentDate.getDay() === 0) {
+        console.log('findFirstAvailableSlotForPatient - Ignorant dimanche:', formatDateForAPI(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+        continue;
+      }
+
+      // Ignorer les samedis si le médecin ne travaille pas le samedi (jour 6 de la semaine)
+      if (currentDate.getDay() === 6 && !travailleSamedi) {
+        console.log('findFirstAvailableSlotForPatient - Ignorant samedi (médecin ne travaille pas le samedi):', formatDateForAPI(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
+        continue;
+      }
+
+      const formattedDate = formatDateForAPI(currentDate);
+      console.log('findFirstAvailableSlotForPatient - Vérifiant créneaux pour:', formattedDate);
+      const result = await rendezvousService.getCreneauxDisponibles(medecinId, formattedDate);
+      console.log('findFirstAvailableSlotForPatient - Résultat créneaux disponibles:', result);
+
+      if (result.success && result.data.creneaux && result.data.creneaux.length > 0) {
+        // Retourner le premier créneau disponible de ce jour
+        const firstCreneau = result.data.creneaux[0];
+        console.log('findFirstAvailableSlotForPatient - Créneau trouvé:', firstCreneau);
+        const creneauHeure = typeof firstCreneau === 'object' ? firstCreneau.heure : firstCreneau;
+        
+        // Vérifier que le créneau existe bien dans la liste des créneaux disponibles
+        const creneauExists = result.data.creneaux.some(creneau => creneau.heure === creneauHeure);
+        if (creneauExists) {
+          return {
+            date: formattedDate,
+            heure: creneauHeure
+          };
+        } else {
+          console.error('findFirstAvailableSlotForPatient - Erreur: Le créneau trouvé n\'existe pas dans la liste des créneaux disponibles');
+        }
       }
 
       // Passer au jour suivant
@@ -303,6 +617,7 @@ const handleCloseSuggestionsModal = () => {
     }
 
     // Aucun créneau trouvé
+    console.log('findFirstAvailableSlotForPatient - Aucun créneau trouvé');
     return null;
   };
 
@@ -465,17 +780,30 @@ const handleCloseSuggestionsModal = () => {
                         </button>
                     )}
 
-                      {/* Bouton jaune (Suivi) - affiché seulement si le médecin a configuré des suggestions pour le bouton jaune ET que le patient a déjà eu des rendez-vous */}
-                      {medecin.suggestions_config && medecin.suggestions_config.jaune && medecin.suggestions_config.jaune.length > 0 && userRendezvous.length > 0 && (
-                        <button
-                           className="priority-button priority-button-medium"
-                           onClick={() => handleBookAppointment(medecin, 'moyenne')}
-                           title="Prendre rendez-vous pour un suivi ou une consultation non urgente"
-                        >
-                        <span className="priority-icon">⏰</span>
-                        <span className="priority-text">Suivi</span>
-                        </button>
-                      )}
+                      {/* Bouton jaune (Suivi) - affiché seulement si le médecin a configuré des suggestions pour le bouton jaune ET que le patient a déjà eu des rendez-vous avec ce médecin qui sont passés */}
+                      {(() => {
+                        // Filtrer les rendez-vous du patient avec ce médecin
+                        const medecinRendezvous = userRendezvous.filter(rdv => 
+                          rdv.medecin_id === medecin.id || rdv.medecin === medecin.id || rdv.medecin?.id === medecin.id
+                        );
+                        
+                        // Utiliser la fonction de débogage pour vérifier si le patient a un rendez-vous passé avec ce médecin
+                        const hasPastAppointment = hasPastAppointmentWithMedecin(medecin);
+                        
+                        return medecin.suggestions_config && 
+                               medecin.suggestions_config.jaune && 
+                               medecin.suggestions_config.jaune.length > 0 && 
+                               hasPastAppointment ? (
+                          <button
+                             className="priority-button priority-button-medium"
+                             onClick={() => handleBookAppointment(medecin, 'moyenne')}
+                             title="Prendre rendez-vous pour un suivi ou une consultation non urgente"
+                          >
+                          <span className="priority-icon">⏰</span>
+                          <span className="priority-text">Suivi</span>
+                          </button>
+                        ) : null;
+                      })()}
 
                       {/* Bouton rouge (Urgence) - affiché seulement si le médecin a configuré des suggestions pour le bouton rouge */}
                       {medecin.suggestions_config && medecin.suggestions_config.rouge && medecin.suggestions_config.rouge.length > 0 && (
@@ -508,59 +836,78 @@ const handleCloseSuggestionsModal = () => {
       <Modal
         isOpen={showSuggestionsModal}
         onClose={handleCloseSuggestionsModal}
-        title={selectedPriorityType === 'vert' ? '' : selectedPriorityType === 'jaune' ? 'Suivi' : 'Urgence'}
-        showCloseButton={false}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {selectedPriorityType === 'vert' ? (
+              <>
+                <span className="priority-badge green">Consultation</span>
+              </>
+            ) : selectedPriorityType === 'jaune' ? (
+              <span className="priority-badge yellow">Suivi</span>
+            ) : (
+              <span className="priority-badge red">Urgence</span>
+            )}
+          </div>
+        }
+        showCloseButton={true}
+        className="suggestions-modal"
       >
         {selectedMedecin && selectedMedecin.suggestions_config && selectedMedecin.suggestions_config[selectedPriorityType] && (
           <div className="suggestions-list">
-            <p style={{ marginBottom: '15px' }}>Voici les suggestions pour ce type de rendez-vous :</p>
-            {selectedMedecin.suggestions_config[selectedPriorityType].map(suggestionId => {
+            <p>Voici les suggestions pour ce type de rendez-vous :</p>
+            {selectedMedecin.suggestions_config[selectedPriorityType].map((suggestionId, index) => {
               // Trouver la suggestion correspondante dans les suggestions pré-définies
               let suggestion = null;
               if (selectedPriorityType === 'vert') {
                 suggestion = suggestionsPredefinies.vert.find(s => s.id === suggestionId);
+                // Si non trouvé, essayer avec l'index
+                if (!suggestion && suggestionsPredefinies.vert[index]) {
+                  suggestion = suggestionsPredefinies.vert[index];
+                }
               } else if (selectedPriorityType === 'jaune') {
                 suggestion = suggestionsPredefinies.jaune.find(s => s.id === suggestionId);
+                // Si non trouvé, essayer avec l'index
+                if (!suggestion && suggestionsPredefinies.jaune[index]) {
+                  suggestion = suggestionsPredefinies.jaune[index];
+                }
               } else if (selectedPriorityType === 'rouge') {
                 suggestion = suggestionsPredefinies.rouge.find(s => s.id === suggestionId);
+                // Si non trouvé, essayer avec l'index
+                if (!suggestion && suggestionsPredefinies.rouge[index]) {
+                  suggestion = suggestionsPredefinies.rouge[index];
+                }
               }
               
               if (!suggestion) return null;
               
               return (
                 <div
-                  key={suggestion.id}
-                  className="suggestion-item"
-                  style={{
-                    padding: '15px',
-                    marginBottom: '10px',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    backgroundColor: selectedPriorityType === 'vert' ? '#e8f5e9' : selectedPriorityType === 'jaune' ? '#fff8e1' : '#ffebee'
-                  }}
+                  key={suggestion.id || index}
+                  className={`suggestion-item ${selectedPriorityType}`}
                 >
-                  <h4 style={{ margin: '0 0 5px 0', fontSize: '1.1rem' }}>{suggestion.text}</h4>
-                  <p style={{ margin: '0', fontSize: '0.9rem', color: '#666' }}>{suggestion.description}</p>
+                  <h4>{suggestion.text}</h4>
+                  <p>{suggestion.description}</p>
                 </div>
               );
             })}
             
-            <div style={{ marginTop: '20px', borderTop: '1px solid #e0e0e0', paddingTop: '15px' }}>
+            <div className="suggestions-actions">
               <p>Voulez-vous prendre rendez-vous avec le Dr. {selectedMedecin.nom_complet} ?</p>
-              <button
-                className="btn btn-primary"
-                onClick={handleAutoBooking}
-                disabled={loadingBooking}
-                style={{ marginRight: '10px' }}
-              >
-                {loadingBooking ? 'Chargement...' : 'Confirmer le rendez-vous'}
-              </button>
-              <button
-                className="btn btn-secondary"
-                onClick={handleCloseSuggestionsModal}
-              >
-                Annuler
-              </button>
+              <div className="btn-group">
+                <button
+                  className="btn btn-primary"
+                  onClick={handleAutoBooking}
+                  disabled={loadingBooking}
+                >
+                  {loadingBooking ? 'Chargement...' : 'Confirmer le rendez-vous'}
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleCloseSuggestionsModal}
+                >
+                  Annuler
+                </button>
+              </div>
             </div>
             
             {bookingError && (

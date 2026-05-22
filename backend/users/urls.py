@@ -13,6 +13,7 @@ from .reception_views import (
     ReceptionMedecinDetailView,
     ReceptionRendezvousListView,
     ReceptionRendezvousDetailView,
+    ReceptionPatientsWithRendezvousListView,
     reception_dashboard
 )
 
@@ -30,4 +31,5 @@ urlpatterns = [
     path('reception/medecins/<int:pk>/', ReceptionMedecinDetailView.as_view(), name='reception-medecin-detail'),
     path('reception/rendezvous/', ReceptionRendezvousListView.as_view(), name='reception-rendezvous-list'),
     path('reception/rendezvous/<int:pk>/', ReceptionRendezvousDetailView.as_view(), name='reception-rendezvous-detail'),
+    path('reception/patients-with-rendezvous/', ReceptionPatientsWithRendezvousListView.as_view(), name='reception-patients-with-rendezvous'),
 ]

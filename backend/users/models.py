@@ -12,10 +12,24 @@ class User(AbstractUser):
         ('admin', 'Administrateur'),
     ]
 
+    def save(self, *args, **kwargs):
+        print(f"Sauvegarde de l'utilisateur {self.id}: {self.first_name} {self.last_name}")
+        print(f"visible_for_reception: {self.visible_for_reception}")
+        print(f"medecin: {self.medecin}")
+        super().save(*args, **kwargs)
+        print(f"Utilisateur {self.id} sauvegardé avec succès")
+
     role = models.CharField(
         max_length=10, 
         choices=ROLE_CHOICES, 
         default='patient'
+    )
+    code_unique = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        unique=True,
+        verbose_name="Code unique du médecin"
     )
     visible_for_reception = models.BooleanField(
     default=True,
@@ -37,6 +51,15 @@ class User(AbstractUser):
         null=True,
         verbose_name="Adresse"
     )
+    medecin = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='patients_associes',
+        verbose_name="Médecin associé",
+        limit_choices_to={'role': 'medecin'}
+    )
     city = models.CharField(
         max_length=100, 
         blank=True, 
@@ -52,6 +75,10 @@ class User(AbstractUser):
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Date de création"
+    )
+    total_rendezvous_count = models.IntegerField(
+        default=0,
+        verbose_name="Nombre total de rendez-vous"
     )
 
     def save(self, *args, **kwargs):

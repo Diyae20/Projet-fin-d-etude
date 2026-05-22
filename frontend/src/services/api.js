@@ -11,7 +11,7 @@ const api = axios.create({
 // Intercepteur pour ajouter le token d'authentification à chaque requête
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Token ${token}`;
     }
@@ -32,8 +32,8 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401 && !error.config.url.includes('/login')) {
       // Rediriger vers la page de connexion uniquement si nous ne sommes pas déjà sur cette page
       if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
         window.location.href = '/login';
       }
     }

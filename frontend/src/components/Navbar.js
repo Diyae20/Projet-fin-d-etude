@@ -31,6 +31,9 @@ const Navbar = () => {
             {user.role === 'patient' && (
               <Link to="/rendezvous">Mes Rendez-vous</Link>
             )}
+            {user.role === 'patient' && (
+              <Link to="/patient/rendezvous/history">Historique</Link>
+            )}
             <Link to="/change-password">Changer mot de passe</Link>
             <Link to="/delete-account" style={{ color: '#dc3545' }}>Supprimer mon compte</Link>
             <span>Bonjour, {user.first_name}</span>

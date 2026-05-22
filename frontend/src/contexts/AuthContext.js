@@ -9,8 +9,8 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     // Vérifier si l'utilisateur est déjà connecté au chargement
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
+    const token = sessionStorage.getItem('token');
+    const userData = sessionStorage.getItem('user');
 
     if (token && userData) {
       setUser(JSON.parse(userData));
@@ -30,9 +30,9 @@ export const AuthProvider = ({ children }) => {
 
       const { token, user } = response.data;
 
-      // Stocker le token et les informations utilisateur
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      // Stocker le token et les informations utilisateur dans sessionStorage (isolé par onglet)
+      sessionStorage.setItem('token', token);
+      sessionStorage.setItem('user', JSON.stringify(user));
 
       // Configurer axios
       axios.defaults.headers.common['Authorization'] = `Token ${token}`;
@@ -49,7 +49,7 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = (updatedUser) => {
     setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    sessionStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
   const register = async (userData) => {
@@ -69,8 +69,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
   };
@@ -96,9 +96,9 @@ export const AuthProvider = ({ children }) => {
       const response = await axios.post('/api/auth/delete-account/', {
         password
       });
-      // Nettoyer le localStorage après la suppression du compte
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      // Nettoyer le sessionStorage après la suppression du compte
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
       delete axios.defaults.headers.common['Authorization'];
       setUser(null);
       return { success: true, data: response.data };

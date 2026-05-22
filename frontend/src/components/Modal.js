@@ -2,12 +2,12 @@
 import React from 'react';
 import './Modal.css';
 
-const Modal = ({ isOpen, onClose, title, children, showCloseButton = true }) => {
+const Modal = ({ isOpen, onClose, title, children, showCloseButton = true, className = '' }) => {
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay">
-      <div className="modal">
+      <div className={`modal ${className}`}>
         <div className="modal-header">
           <h2>{title}</h2>
           {showCloseButton && <button className="modal-close" onClick={onClose}>&times;</button>}

@@ -29,26 +29,25 @@ const ReceptionUserList = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const rendezvousResponse = await api.get('/users/reception/rendezvous/');
-      console.log('Réponse de l\'API rendezvous:', rendezvousResponse.data);
+      // Utiliser la vue qui retourne uniquement les patients qui ont pris un rendez-vous
+      const usersResponse = await api.get('/users/reception/patients-with-rendezvous/');
+      console.log('Réponse de l\'API users:', usersResponse.data);
       
-      const rendezvousData = rendezvousResponse.data.results || rendezvousResponse.data;
+      const usersData = usersResponse.data.results || usersResponse.data;
+      const patients = [];
 
-      const patientsMap = new Map();
-
-      if (Array.isArray(rendezvousData)) {
-        rendezvousData.forEach(rdv => {
-          if (rdv.patient && rdv.patient.id && !patientsMap.has(rdv.patient.id)) {
-            patientsMap.set(rdv.patient.id, {
-              ...rdv.patient,
-              medecin : rdv.medecin
+      if (Array.isArray(usersData)) {
+        usersData.forEach(user => {
+          if (user.role === 'patient' && user.visible_for_reception) {
+            patients.push({
+              ...user,
+              medecin: user.medecin || null
             });
           }
         });
       }
-      
-      const patients = Array.from(patientsMap.values());
-      console.log('Patients avec rendez-vous:', patients);
+
+      console.log('Patients:', patients);
       setUsers(patients);
     } catch (error) {
       if (error.response && error.response.status === 403) {
@@ -94,13 +93,22 @@ const ReceptionUserList = () => {
         await api.delete(`/rendezvous/${rdv.id}/`);
       }
       
-      // Désactiver le patient au lieu de le supprimer
-      await api.patch(`/users/reception/users/${userId}/`, { visible_for_reception: false, is_active: true });
-
-      // Recharger la liste des utilisateurs depuis le serveur
-      await fetchUsers();
-      setError('');
+      // Désactiver le patient et le dissocier du médecin
+      console.log(`Désactivation du patient ${userId}`);
+      const updateData = { visible_for_reception: false, is_active: true, medecin: null };
+      console.log(`Données de mise à jour:`, updateData);
+      const updateResponse = await api.patch(`/users/reception/users/${userId}/`, updateData);
+      console.log(`Réponse de la mise à jour:`, updateResponse.data);
+      console.log(`État visible_for_reception après mise à jour:`, updateResponse.data.visible_for_reception);
+      console.log(`État medecin après mise à jour:`, updateResponse.data.medecin);
+      // Forcer le rechargement de la page pour mettre à jour la liste
+      console.log(`Rechargement de la page`);
+      setTimeout(() => {
+        window.location.href = window.location.href;
+      }, 500);
     } catch (error) {
+      console.error("Erreur lors de la désactivation du patient:", error);
+      console.error("Détails de l'erreur:", error.response);
       setError("Erreur lors de la désactivation du patient.");
     }
   };

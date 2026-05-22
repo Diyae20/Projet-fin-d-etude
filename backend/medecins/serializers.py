@@ -32,7 +32,14 @@ class MedecinSerializer(serializers.ModelSerializer):
             'id', 'user', 'specialite', 'specialite_id', 'bio',
             'adresse_cabinet', 'telephone', 'ville', 'duree_consultation',
             'max_patients_par_jour', 'created_at', 'updated_at', 'photo',
-            'first_name', 'last_name', 'email', 'suggestions_config'
+            'first_name', 'last_name', 'email', 'suggestions_config',
+            'lundi_actif', 'lundi_debut', 'lundi_fin',
+            'mardi_actif', 'mardi_debut', 'mardi_fin',
+            'mercredi_actif', 'mercredi_debut', 'mercredi_fin',
+            'jeudi_actif', 'jeudi_debut', 'jeudi_fin',
+            'vendredi_actif', 'vendredi_debut', 'vendredi_fin',
+            'samedi_actif', 'samedi_debut', 'samedi_fin',
+            'dimanche_actif', 'dimanche_debut', 'dimanche_fin'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
@@ -128,11 +135,19 @@ class MedecinDetailSerializer(serializers.ModelSerializer):
     prenom = serializers.CharField(read_only=True)
     nom = serializers.CharField(read_only=True)
     suggestions_config = serializers.JSONField(required=False, allow_null=True)
+    user = UserSerializer(read_only=True)
 
     class Meta:
         model = Medecin
         fields = [
             'id', 'nom_complet', 'specialite', 'photo', 'email', 'first_name', 'last_name', 'prenom', 'nom', 'bio',
             'adresse_cabinet', 'telephone', 'ville', 'duree_consultation',
-            'max_patients_par_jour', 'created_at', 'updated_at', 'suggestions_config'
+            'max_patients_par_jour', 'created_at', 'updated_at', 'suggestions_config', 'user',
+            'lundi_actif', 'lundi_debut', 'lundi_fin',
+            'mardi_actif', 'mardi_debut', 'mardi_fin',
+            'mercredi_actif', 'mercredi_debut', 'mercredi_fin',
+            'jeudi_actif', 'jeudi_debut', 'jeudi_fin',
+            'vendredi_actif', 'vendredi_debut', 'vendredi_fin',
+            'samedi_actif', 'samedi_debut', 'samedi_fin',
+            'dimanche_actif', 'dimanche_debut', 'dimanche_fin'
         ]

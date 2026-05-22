@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Q
+from django.db.models import Q, Count
 from .models import Specialite, Medecin
 from .serializers import (
     SpecialiteSerializer,
@@ -11,6 +11,9 @@ from .serializers import (
     MedecinListSerializer,
     MedecinDetailSerializer
 )
+from users.models import User
+from users.serializers import UserSerializer
+from rendezvous.models import RendezVous
 
 
 class SpecialiteListView(generics.ListCreateAPIView):
@@ -158,3 +161,31 @@ class MedecinProfileView(generics.RetrieveUpdateAPIView):
             serializer.instance.user.save()
 
         serializer.save()
+
+
+class MedecinPatientsListView(generics.ListAPIView):
+    """
+    Vue pour lister les patients associés à un médecin
+    """
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        Récupérer tous les patients associés au médecin connecté
+        """
+        user = self.request.user
+        
+        # Vérifier que l'utilisateur est un médecin
+        if not user.is_medecin:
+            return User.objects.none()
+        
+        # Récupérer tous les patients associés à ce médecin et qui sont actifs
+        # Utiliser le champ total_rendezvous_count qui ne diminue jamais
+        patients = User.objects.filter(
+            role='patient',
+            medecin=user,
+            visible_for_reception=True
+        )
+        
+        return patients

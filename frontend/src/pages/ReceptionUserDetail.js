@@ -32,8 +32,19 @@ const ReceptionUserDetail = () => {
 
   const fetchRendezvous = async () => {
     try {
-      const response = await api.get(`/rendezvous/?patient=${id}`);
-      setRendezvous(response.data.results || response.data);
+      // Récupérer tous les rendez-vous du patient, y compris ceux supprimés (statut "passe")
+      const response = await api.get(`/rendezvous/patient/${id}/?include_deleted=true`);
+      const allRendezvous = response.data;
+      
+      // Filtrer pour ne garder que les rendez-vous avec le statut "passé"
+      const historyRendezvous = allRendezvous.filter(rdv => 
+        rdv.statut === 'passe'
+      );
+      
+      // Trier les rendez-vous par date décroissante
+      historyRendezvous.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      setRendezvous(historyRendezvous);
     } catch (error) {
       console.error("Erreur lors du chargement des rendez-vous:", error);
     }
@@ -138,6 +149,9 @@ const ReceptionUserDetail = () => {
       
       // Désactiver le patient au lieu de le supprimer
       await api.patch(`/users/reception/users/${id}/`, { visible_for_reception: false, is_active: true });
+
+      // Réinitialiser le nombre total de rendez-vous du patient
+      await api.patch(`/users/reception/users/${id}/`, { total_rendezvous_count: 0 });
 
       // Rediriger vers la liste des patients
       navigate('/reception/users');
@@ -295,15 +309,58 @@ const ReceptionUserDetail = () => {
 
         <div className="mt-4">
           <div className="d-flex gap-2">
-            {/* Bouton jaune - affiché seulement si le patient a déjà eu des rendez-vous */}
-            {rendezvous.length > 0 && (
-              <button
-                className="btn btn-warning"
-                onClick={() => navigate(`/reception/rendezvous/new?patient=${id}&type=suivi`)}
-                style={{minWidth: '100px'}}
-              >
-                Suivi
-              </button>
+            {/* Les boutons d'action rapide peuvent être ajoutés ici si nécessaire */}
+          </div>
+        </div>
+
+        <div className="card mt-4">
+          <div className="card-body">
+            <h4>Historique des rendez-vous passés</h4>
+            {rendezvous.length === 0 ? (
+              <p>Aucun rendez-vous passé pour ce patient.</p>
+            ) : (
+              <table className="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Heure</th>
+                    <th>Médecin</th>
+                    <th>Type</th>
+                    <th>Statut</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rendezvous.map(rdv => (
+                    <tr key={rdv.id}>
+                      <td>{new Date(rdv.date).toLocaleDateString('fr-FR')}</td>
+                      <td>{rdv.heure || new Date(rdv.date).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}</td>
+                      <td>{rdv.medecin ? `${rdv.medecin.first_name} ${rdv.medecin.last_name}` : 'Non assigné'}</td>
+                      <td>
+                        {rdv.type_consultation === 'consultation' ? (
+                          <span className="badge bg-info">Consultation</span>
+                        ) : rdv.type_consultation === 'suivi' ? (
+                          <span className="badge bg-warning">Suivi</span>
+                        ) : (
+                          <span className="badge bg-secondary">-</span>
+                        )}
+                      </td>
+                      <td>
+                        <span className={`badge bg-${
+                          rdv.statut === 'confirme' ? 'success' : 
+                          rdv.statut === 'annule' ? 'danger' : 
+                          rdv.statut === 'en_attente' ? 'warning' : 
+                          rdv.statut === 'passe' ? 'secondary' : 'primary'
+                        }`}>
+                          {rdv.statut === 'confirme' ? 'Confirmé' : 
+                           rdv.statut === 'annule' ? 'Annulé' : 
+                           rdv.statut === 'en_attente' ? 'En attente' : 
+                           rdv.statut === 'passe' ? 'Passé' : rdv.statut}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
         </div>

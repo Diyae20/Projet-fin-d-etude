@@ -108,8 +108,12 @@ const ReceptionRendezvousDetail = () => {
       return;
     }
     try {
+      // Supprimer réellement le rendez-vous
       await api.delete(`/users/reception/rendezvous/${id}/`);
-      navigate('/reception/rendezvous');
+      setSuccess("Le rendez-vous a été supprimé avec succès.");
+      setTimeout(() => {
+        navigate('/reception/rendezvous');
+      }, 2000);
     } catch (error) {
       setError("Erreur lors de la suppression du rendez-vous.");
     }
@@ -246,16 +250,26 @@ const ReceptionRendezvousDetail = () => {
                       <option value="passe">Passé</option>
                     </select>
                   </div>
-                  <div className="col-md-12 mb-3">
-                    <label className="form-label">Notes</label>
-                    <textarea
-                      className="form-control"
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleChange}
-                      rows="4"
-                    />
-                  </div>
+                  {rendezvous.type_consultation === 'consultation' ? (
+                    <div className="col-md-12 mb-3">
+                      <label className="form-label">Notes (Consultation)</label>
+                    </div>
+                  ) : rendezvous.type_consultation === 'suivi' ? (
+                    <div className="col-md-12 mb-3">
+                      <label className="form-label">Notes (Suivi)</label>
+                    </div>
+                  ) : (
+                    <div className="col-md-12 mb-3">
+                      <label className="form-label">Notes</label>
+                      <textarea
+                        className="form-control"
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleChange}
+                        rows="4"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="d-flex gap-2 mt-4">
@@ -296,7 +310,7 @@ const ReceptionRendezvousDetail = () => {
                   <strong>Statut:</strong> <span className={`badge bg-${getStatutBadgeClass(rendezvous.statut)}`}>{rendezvous.statut}</span>
                 </div>
                 <div className="col-md-12 mb-3">
-                  <strong>Notes:</strong> {rendezvous.notes || 'N/A'}
+                  <strong>Notes:</strong> {rendezvous.type_consultation === 'consultation' ? 'Consultation' : rendezvous.type_consultation === 'suivi' ? 'Suivi' : (rendezvous.notes || 'N/A')}
                 </div>
               </div>
             )}

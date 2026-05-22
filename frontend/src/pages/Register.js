@@ -15,7 +15,8 @@ const Register = () => {
     phone: '',
     date_of_birth: '',
     address: '',
-    city: ''
+    city: '',
+    code_medecin: ''
   });
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
@@ -26,6 +27,11 @@ const Register = () => {
   // Validation des champs du formulaire
   const validateForm = () => {
     const newErrors = {};
+
+    // Validation du code du médecin (si rôle = réception)
+    if (formData.role === 'reception' && !formData.code_medecin.trim()) {
+      newErrors.code_medecin = "Le code du médecin est requis pour le rôle réception";
+    }
 
     // Validation du nom d'utilisateur
     if (!formData.username.trim()) {
@@ -273,13 +279,31 @@ const Register = () => {
               name="role"
               value={formData.role}
               onChange={handleChange}
-              required
+              className={errors.role ? 'is-invalid' : ''}
             >
               <option value="patient">Patient</option>
               <option value="medecin">Médecin</option>
               <option value="reception">Réception</option>
             </select>
+            {errors.role && <div className="invalid-feedback">{errors.role}</div>}
           </div>
+          {formData.role === 'reception' && (
+            <div className="form-group">
+              <label htmlFor="code_medecin">Code du médecin *</label>
+              <input
+                type="text"
+                id="code_medecin"
+                name="code_medecin"
+                value={formData.code_medecin}
+                onChange={handleChange}
+                className={errors.code_medecin ? 'is-invalid' : ''}
+                placeholder="Entrez le code de votre médecin"
+                required
+              />
+              {errors.code_medecin && <div className="invalid-feedback">{errors.code_medecin}</div>}
+            </div>
+          )}
+
 
           <div className="form-group">
             <label htmlFor="phone">Téléphone</label>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import Alert from '../components/Alert';
+import UrgentNotificationAlert from '../components/UrgentNotificationAlert';
 
 const ReceptionDashboard = () => {
   const [stats, setStats] = useState({
@@ -28,15 +29,39 @@ const ReceptionDashboard = () => {
       setLoading(true);
       const response = await api.get('/users/reception/dashboard/');
       setStats(response.data);
+
+       const usersResponse = await api.get('/users/reception/users/');
+       const usersData = usersResponse.data.results || usersResponse.data;
+
+
       const rendezvousResponse = await api.get('/users/reception/rendezvous/');
       const rendezvousData = rendezvousResponse.data.results || rendezvousResponse.data;
 
 
       const patientsMap = new Map();
+
+      if (Array.isArray(usersData)) {
+        usersData.forEach(user => {
+          if (user.role === 'patient' && user.visible_for_reception) {
+            patientsMap.set(user.id, {
+              ...user,
+              medecin: null
+            });
+          }
+        });
+      }
+
       if (Array.isArray(rendezvousData)) {
         rendezvousData.forEach(rdv => {
-          if (rdv.patient && !patientsMap.has(rdv.patient.id)) {
-            patientsMap.set(rdv.patient.id, rdv.patient);
+          if (rdv.patient && rdv.patient.id && patientsMap.has(rdv.patient.id)) {
+            const patient = patientsMap.get(rdv.patient.id);
+
+            if (rdv.medecin) {
+              patientsMap.set(rdv.patient.id, {
+                ...patient,
+                medecin: rdv.medecin
+              });
+            }
           }
         });
       }
@@ -65,6 +90,7 @@ const ReceptionDashboard = () => {
 
   return (
     <div className="reception-dashboard">
+      <UrgentNotificationAlert />
       <div className="container mt-4">
         <h2>Tableau de bord - Réception</h2>
 
@@ -127,20 +153,11 @@ const ReceptionDashboard = () => {
             </div>
           </div>
 
-          <div className="col-md-3 mb-4">
+          <div className="col-md-6 mb-4">
             <div className="card text-center">
               <div className="card-body">
                 <h5 className="card-title">Annulés</h5>
                 <h2 className="text-danger">{stats.rendezvous_annules}</h2>
-              </div>
-            </div>
-          </div>
-
-          <div className="col-md-3 mb-4">
-            <div className="card text-center">
-              <div className="card-body">
-                <h5 className="card-title">Passés</h5>
-                <h2 className="text-secondary">{stats.rendezvous_passe || 0}</h2>
               </div>
             </div>
           </div>

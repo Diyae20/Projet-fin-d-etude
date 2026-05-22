@@ -44,6 +44,9 @@ const ReceptionRendezvousList = () => {
   const filterRendezvous = () => {
     let filtered = rendezvous;
 
+    // Masquer les rendez-vous avec le statut "passe" de la liste de la réception
+    filtered = filtered.filter(rv => rv.statut !== 'passe');
+
     if (filter !== 'all') {
       filtered = filtered.filter(rv => rv.statut === filter);
     }
@@ -69,8 +72,9 @@ const ReceptionRendezvousList = () => {
     if (!selectedRendezvous) return;
 
     try {
+      // Supprimer réellement le rendez-vous
       await api.delete(`/users/reception/rendezvous/${selectedRendezvous.id}/`);
-      setRendezvous(rendezvous.filter(rv => rv.id !== selectedRendezvous.id));
+      await fetchRendezvous();
       setShowDeleteModal(false);
       setSelectedRendezvous(null);
     } catch (error) {
@@ -156,7 +160,7 @@ const ReceptionRendezvousList = () => {
                   </thead>
                   <tbody>
                     {filteredRendezvous.map(rv => (
-                      <tr key={rv.id} style={{verticalAlign: 'middle', backgroundColor: rv.priorite === 'basse' ? '#d4edda' : 'transparent'}}>
+                      <tr key={rv.id} style={{verticalAlign: 'middle', backgroundColor: rv.priorite === 'urgente' ? '#f8d7da' : rv.type_consultation === 'consultation' ? '#d4edda' : rv.type_consultation === 'suivi' ? '#fff3cd' : 'transparent', borderLeft: rv.priorite === 'urgente' ? '4px solid #dc3545' : 'none'}}>
                         <td style={{padding: '12px 15px'}}>
                           <div style={{fontWeight: '500'}}>
                             {rv.patient ? `${rv.patient.first_name || ''} ${rv.patient.last_name || ''}` : 'N/A'}
@@ -175,6 +179,7 @@ const ReceptionRendezvousList = () => {
                             day: 'numeric'
                           })} à {rv.heure}
                         </td>
+
                         <td style={{padding: '12px 15px'}}>
                           <span className={`badge bg-${getStatutBadgeClass(rv.statut)}`} style={{fontSize: '0.85em', padding: '6px 12px'}}>
                             {rv.statut}

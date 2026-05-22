@@ -85,6 +85,28 @@ class Medecin(models.Model):
     default=dict,
     help_text="Configuration des suggestions pré-définies pour les boutons de priorité"
     )
+    # Horaires de travail pour les médecins (gérés par la réception)
+    lundi_actif = models.BooleanField(default=True, verbose_name="Lundi actif")
+    lundi_debut = models.TimeField(default='08:00', verbose_name="Lundi heure de début")
+    lundi_fin = models.TimeField(default='23:59', verbose_name="Lundi heure de fin")
+    mardi_actif = models.BooleanField(default=True, verbose_name="Mardi actif")
+    mardi_debut = models.TimeField(default='08:00', verbose_name="Mardi heure de début")
+    mardi_fin = models.TimeField(default='23:59', verbose_name="Mardi heure de fin")
+    mercredi_actif = models.BooleanField(default=True, verbose_name="Mercredi actif")
+    mercredi_debut = models.TimeField(default='08:00', verbose_name="Mercredi heure de début")
+    mercredi_fin = models.TimeField(default='23:59', verbose_name="Mercredi heure de fin")
+    jeudi_actif = models.BooleanField(default=True, verbose_name="Jeudi actif")
+    jeudi_debut = models.TimeField(default='08:00', verbose_name="Jeudi heure de début")
+    jeudi_fin = models.TimeField(default='23:59', verbose_name="Jeudi heure de fin")
+    vendredi_actif = models.BooleanField(default=True, verbose_name="Vendredi actif")
+    vendredi_debut = models.TimeField(default='08:00', verbose_name="Vendredi heure de début")
+    vendredi_fin = models.TimeField(default='23:59', verbose_name="Vendredi heure de fin")
+    samedi_actif = models.BooleanField(default=False, verbose_name="Samedi actif")
+    samedi_debut = models.TimeField(default='08:00', verbose_name="Samedi heure de début")
+    samedi_fin = models.TimeField(default='12:00', verbose_name="Samedi heure de fin")
+    dimanche_actif = models.BooleanField(default=False, verbose_name="Dimanche actif")
+    dimanche_debut = models.TimeField(default='08:00', verbose_name="Dimanche heure de début")
+    dimanche_fin = models.TimeField(default='12:00', verbose_name="Dimanche heure de fin")
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Date de création"
@@ -99,11 +121,11 @@ class Medecin(models.Model):
         verbose_name_plural = "Médecins"
 
     def __str__(self):
-        return f"Dr. {self.user.first_name} {self.user.last_name} - {self.specialite if self.specialite else 'Non spécifié'}"
+        return f"{self.user.first_name} {self.user.last_name} - {self.specialite if self.specialite else 'Non spécifié'}"
 
     @property
     def nom_complet(self):
-        return f"Dr. {self.user.first_name} {self.user.last_name}"
+        return f"{self.user.first_name} {self.user.last_name}"
 
     @property
     def prenom(self):

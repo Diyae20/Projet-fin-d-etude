@@ -1,6 +1,94 @@
 from rest_framework import serializers
 from users.serializers import UserSerializer
-from .models import RendezVous
+from .models import RendezVous, NotePatient, NotificationUrgente
+
+
+class NotePatientSerializer(serializers.ModelSerializer):
+    """
+    Sérialiseur pour le modèle NotePatient
+    """
+    patient = UserSerializer(read_only=True)
+    medecin = UserSerializer(read_only=True)
+    patient_id = serializers.IntegerField(write_only=True, required=False)
+    medecin_id = serializers.IntegerField(write_only=True, required=False)
+    contenu = serializers.CharField(required=False, allow_blank=True)
+
+    class Meta:
+        model = NotePatient
+        fields = [
+            'id', 'patient', 'patient_id', 'medecin', 'medecin_id',
+            'contenu', 'cree_le', 'modifie_le'
+        ]
+        read_only_fields = ['id', 'cree_le', 'modifie_le', 'patient', 'medecin']
+
+    def create(self, validated_data):
+        """
+        Créer ou mettre à jour une note pour un patient
+        """
+        patient_id = validated_data.pop('patient_id', None)
+        medecin_id = validated_data.pop('medecin_id', None)
+
+        # Si patient_id n'est pas fourni, utiliser l'utilisateur connecté
+        if not patient_id:
+            patient_id = self.context['request'].user.id
+
+        # Si medecin_id n'est pas fourni, utiliser l'utilisateur connecté
+        if not medecin_id:
+            medecin_id = self.context['request'].user.id
+
+        # Vérifier que les IDs sont différents
+        if patient_id == medecin_id:
+            raise serializers.ValidationError({
+                "medecin_id": "Le patient et le médecin ne peuvent pas être la même personne."
+            })
+
+        # Vérifier que les utilisateurs existent et ont les bons rôles
+        from users.models import User
+        try:
+            patient = User.objects.get(id=patient_id)
+            if not patient.is_patient:
+                raise serializers.ValidationError({
+                    "patient_id": "L'utilisateur avec cet ID n'est pas un patient."
+                })
+        except User.DoesNotExist:
+            raise serializers.ValidationError({
+                "patient_id": "L'utilisateur avec cet ID n'existe pas."
+            })
+
+        try:
+            medecin = User.objects.get(id=medecin_id)
+            if not medecin.is_medecin:
+                raise serializers.ValidationError({
+                    "medecin_id": "L'utilisateur avec cet ID n'est pas un médecin."
+                })
+        except User.DoesNotExist:
+            raise serializers.ValidationError({
+                "medecin_id": "L'utilisateur avec cet ID n'existe pas."
+            })
+
+        # Créer ou mettre à jour la note
+        note, created = NotePatient.objects.update_or_create(
+            patient_id=patient_id,
+            medecin_id=medecin_id,
+            defaults={'contenu': validated_data.get('contenu', '')}
+        )
+
+        return note
+
+    def update(self, instance, validated_data):
+        """
+        Mettre à jour une note existante
+        """
+        # Supprimer les champs patient_id et medecin_id des données validées
+        validated_data.pop('patient_id', None)
+        validated_data.pop('medecin_id', None)
+        
+        # Mettre à jour le contenu de la note
+        if 'contenu' in validated_data:
+            instance.contenu = validated_data['contenu']
+        
+        instance.save()
+        return instance
 
 
 class RendezVousSerializer(serializers.ModelSerializer):
@@ -12,6 +100,7 @@ class RendezVousSerializer(serializers.ModelSerializer):
     patient_id = serializers.IntegerField(write_only=True, required=False)
     medecin_id = serializers.IntegerField(write_only=True, required=False)
     statut_display = serializers.CharField(source='get_statut_display', read_only=True)
+    type_consultation = serializers.CharField(write_only=True, required=False, allow_null=True, allow_blank=True)
 
     class Meta:
         model = RendezVous
@@ -134,6 +223,10 @@ class RendezVousSerializer(serializers.ModelSerializer):
             medecin_id=medecin_id,
             **validated_data
         )
+        if not patient.medecin:
+            patient.medecin = medecin
+            patient.save()
+            
         print(f"Rendez-vous créé avec succès: {rendezvous}")
         return rendezvous
 
@@ -175,3 +268,15 @@ class RendezVousListSerializer(serializers.ModelSerializer):
             'id', 'patient', 'medecin', 'date', 'heure', 'statut', 'statut_display',
             'type_consultation', 'type_consultation_display', 'priorite', 'priorite_display', 'motif', 'notes'
         ]
+
+
+class NotificationUrgenteSerializer(serializers.ModelSerializer):
+    """
+    Sérialiseur pour les notifications urgentes
+    """
+    rendezvous = RendezVousListSerializer(read_only=True)
+
+    class Meta:
+        model = NotificationUrgente
+        fields = ['id', 'rendezvous', 'message', 'lu', 'acquitte', 'cree_le']
+        read_only_fields = ['id', 'cree_le']

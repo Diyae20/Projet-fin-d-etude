@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { rendezvousService } from '../services/rendezvousService';
 import { userService } from '../services/userService';
 import { useAuth } from '../contexts/AuthContext';
@@ -8,6 +9,7 @@ import './RendezvousList.css';
 
 const RendezvousList = () => {
   const { user, updateUser } = useAuth();
+  const navigate = useNavigate();
   const [rendezvous, setRendezvous] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -65,7 +67,10 @@ const RendezvousList = () => {
     const result = await rendezvousService.getRendezvous();
 
     if (result.success) {
-      setRendezvous(result.data.results || result.data);
+      const allRendezvous = result.data.results || result.data;
+      // Filtrer pour exclure les rendez-vous passés
+      const activeRendezvous = allRendezvous.filter(rdv => rdv.statut !== 'passe');
+      setRendezvous(activeRendezvous);
     } else {
       setError(result.error);
     }
@@ -85,6 +90,26 @@ const RendezvousList = () => {
 
     if (result.success) {
       setSuccess('Rendez-vous annulé avec succès');
+      fetchRendezvous();
+    } else {
+      setError(result.error);
+    }
+
+    setCancellingId(null);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer définitivement ce rendez-vous ?')) {
+      return;
+    }
+
+    setCancellingId(id);
+    setError('');
+
+    const result = await rendezvousService.deleteRendezvous(id);
+
+    if (result.success) {
+      setSuccess('Rendez-vous supprimé avec succès');
       fetchRendezvous();
     } else {
       setError(result.error);
@@ -464,7 +489,7 @@ const RendezvousList = () => {
             ) : (
               <div className="rendezvous-list">
                 {rendezvous.map(rdv => (
-                  <div key={rdv.id} className="rendezvous-item">
+                  <div key={rdv.id} className="rendezvous-item" style={{backgroundColor: rdv.priorite === 'urgente' ? '#f8d7da' : rdv.type_consultation === 'consultation' ? '#d4edda' : rdv.type_consultation === 'suivi' ? '#fff3cd' : 'transparent', borderLeft: rdv.priorite === 'urgente' ? '4px solid #dc3545' : 'none'}}>
                     <div className="rendezvous-info">
                       <div className="rendezvous-date">
                         📅 {new Date(rdv.date).toLocaleDateString('fr-FR', {
@@ -477,9 +502,19 @@ const RendezvousList = () => {
                       <div className="rendezvous-medecin">
                         👨‍⚕️ Dr. {rdv.medecin ? `${rdv.medecin.first_name} ${rdv.medecin.last_name}` : rdv.medecin_nom || 'N/A'}
                       </div>
+                      {rdv.priorite === 'urgente' && (
+                        <div className="rendezvous-motif" style={{color: '#dc3545', fontWeight: 'bold'}}>
+                          🚨 Urgent
+                        </div>
+                      )}
                       {rdv.type_consultation === 'consultation' && (
                         <div className="rendezvous-motif">
                           📋 Consultation
+                        </div>
+                      )}
+                      {rdv.type_consultation === 'suivi' && (
+                        <div className="rendezvous-motif">
+                          📋 Suivi
                         </div>
                       )}
                         <span className={`rendezvous-statut ${getStatutClass(rdv.statut)}`}>
@@ -493,6 +528,14 @@ const RendezvousList = () => {
                         disabled={cancellingId === rdv.id}
                       >
                         {cancellingId === rdv.id ? 'Annulation...' : 'Annuler'}
+                      </button>
+                    ) : rdv.statut === 'annule' ? (
+                      <button
+                        className="btn btn-danger"
+                        onClick={() => handleDelete(rdv.id)}
+                        disabled={cancellingId === rdv.id}
+                      >
+                        {cancellingId === rdv.id ? 'Suppression...' : 'Supprimer'}
                       </button>
                     ) : null}
                       </div>

@@ -508,7 +508,7 @@ const MedecinDashboard = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="duree_consultation">Durée moyenne de consultation (minutes)</label>
+                  <label htmlFor="duree_consultation">Durée moyenne pour chaque patient (minutes)</label>
                   <input
                     type="number"
                     id="duree_consultation"
@@ -585,8 +585,15 @@ const MedecinDashboard = () => {
                   {medecinProfile?.adresse_cabinet && <p><strong>Adresse du cabinet:</strong> {medecinProfile.adresse_cabinet}</p>}
                   {medecinProfile?.telephone && <p><strong>Téléphone du cabinet:</strong> {medecinProfile.telephone}</p>}
                   {medecinProfile?.ville && <p><strong>Ville:</strong> {medecinProfile.ville}</p>}
-                  <p><strong>Durée de consultation:</strong> {medecinProfile?.duree_consultation || 30} minutes</p>
+                  <p><strong>Durée moyenne pour chaque patient :</strong> {medecinProfile?.duree_consultation || 30} minutes</p>
                   <p><strong>Nombre maximum de patients par jour:</strong> {medecinProfile?.max_patients_par_jour || 10}</p>
+                </div>
+                <div className="alert alert-info mt-3">
+                  <h5>Votre code unique</h5>
+                  <p>Partagez ce code avec votre réception pour qu'elle puisse s'inscrire.</p>
+                  <div className="alert alert-info">
+                    <strong>Code : </strong>{user?.code_unique || 'Non disponible'}
+                  </div>
                 </div>
                 <button className="btn btn-primary" onClick={() => setEditMode(true)}>
                   Modifier mon profil
@@ -612,12 +619,12 @@ const MedecinDashboard = () => {
           <div className="card">
             <h2>Mes Rendez-vous</h2>
 
-            {rendezvous.length === 0 ? (
+            {rendezvous.filter(rdv => rdv.statut !== 'passe').length === 0 ? (
               <p>Vous n'avez pas encore de rendez-vous.</p>
             ) : (
               <div className="rendezvous-list">
-                {rendezvous.map(rdv => (
-                  <div key={rdv.id} className="rendezvous-item">
+                {rendezvous.filter(rdv => rdv.statut !== 'passe').map(rdv => (
+                  <div key={rdv.id} className="rendezvous-item" style={{backgroundColor: rdv.priorite === 'urgente' ? '#f8d7da' : rdv.type_consultation === 'consultation' ? '#d4edda' : rdv.type_consultation === 'suivi' ? '#fff3cd' : 'transparent', borderLeft: rdv.priorite === 'urgente' ? '4px solid #dc3545' : 'none'}}>
                     <div className="rendezvous-info">
                       <div className="rendezvous-date">
                         📅 {new Date(rdv.date).toLocaleDateString('fr-FR', {
@@ -629,9 +636,19 @@ const MedecinDashboard = () => {
                       </div>
                       <div className="rendezvous-patient">
                         👤 {rdv.patient ? `${rdv.patient.first_name || ''} ${rdv.patient.last_name || ''}` : 'N/A'}
-                        {rdv.type_consultation === 'consultation' && rdv.priorite === 'basse' && (
+                        {rdv.priorite === 'urgente' && (
+                          <div style={{fontSize: '0.85em', color: '#dc3545', fontWeight: 'bold', marginTop: '4px'}}>
+                            🚨 Urgent
+                          </div>
+                        )}
+                        {rdv.type_consultation === 'consultation' && (
                           <div style={{fontSize: '0.85em', color: '#666', marginTop: '4px'}}>
                             📋 Consultation
+                          </div>
+                        )}
+                        {rdv.type_consultation === 'suivi' && (
+                          <div style={{fontSize: '0.85em', color: '#666', marginTop: '4px'}}>
+                            📋 Suivi
                           </div>
                         )}
                       </div>
