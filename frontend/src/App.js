@@ -1,9 +1,8 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import Login from './pages/Login';
+import Login from './pages/LoginCinematic';
 import Register from './pages/Register';
 import MedecinList from './pages/MedecinList';
 import MedecinDetail from './pages/MedecinDetail';
@@ -25,17 +24,21 @@ import ReceptionRendezvousDetail from './pages/ReceptionRendezvousDetail';
 import ProtectedRoute from './components/ProtectedRoute';
 import UrgentNotificationAlert from './components/UrgentNotificationAlert';
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  const isLoginPage = location.pathname === '/';
+  const isRegisterPage = location.pathname === '/register';
+  const isResetPasswordPage = location.pathname === '/reset-password';
+  const hideNavbar = isLoginPage || isRegisterPage || isResetPasswordPage;
+
   return (
-    <AuthProvider>
-      <Router>
-        <div className="app">
-          <UrgentNotificationAlert />
-          <Navbar />
-          <div className="container">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
+    <div className="app">
+      {!hideNavbar && <UrgentNotificationAlert />}
+      {!hideNavbar && <Navbar />}
+      {!hideNavbar ? (
+        <div className="container">
+          <Routes>
+            <Route path="/" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route
@@ -169,7 +172,22 @@ function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
-        </div>
+      ) : (
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Routes>
+      )}
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <AppContent />
       </Router>
     </AuthProvider>
   );

@@ -132,7 +132,7 @@ const Register = () => {
       if (result.success) {
         setSuccess(true);
         setTimeout(() => {
-          navigate('/login');
+          navigate('/');
         }, 2000);
       } else {
         console.error("Erreur d'inscription:", result.error);
@@ -364,7 +364,7 @@ const Register = () => {
         </form>
 
         <p style={{ marginTop: '15px', textAlign: 'center' }}>
-          Déjà un compte ? <Link to="/login">Se connecter</Link>
+          Déjà un compte ? <Link to="/">Se connecter</Link>
         </p>
       </div>
     </div>

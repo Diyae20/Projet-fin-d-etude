@@ -891,6 +891,51 @@ const handleCloseSuggestionsModal = () => {
               );
             })}
             
+            {/* NB - Avertissement selon le type de priorité */}
+            {selectedPriorityType === 'jaune' && (
+              <div className="suggestions-warning" style={{
+                background: '#fff8e1',
+                border: '2px solid #ffc107',
+                borderRadius: '8px',
+                padding: '15px',
+                marginBottom: '15px',
+                marginTop: '5px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <span style={{ fontSize: '20px' }}>⚠️</span>
+                  <div>
+                    <strong style={{ color: '#e65100', fontSize: '14px' }}>NB :</strong>
+                    <p style={{ margin: '5px 0 0 0', color: '#333', fontSize: '13px', lineHeight: '1.6' }}>
+                      Si votre situation ne correspond pas aux suggestions listées :<br/>
+                      (1) une majoration de <strong>2 000 DH</strong> sera appliquée,<br/>
+                      (2) vous serez remis dans la file d'attente normale.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedPriorityType === 'rouge' && (
+              <div className="suggestions-warning" style={{
+                background: '#ffebee',
+                border: '2px solid #f44336',
+                borderRadius: '8px',
+                padding: '15px',
+                marginBottom: '15px',
+                marginTop: '5px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <span style={{ fontSize: '20px' }}>🚨</span>
+                  <div>
+                    <strong style={{ color: '#b71c1c', fontSize: '14px' }}>NB :</strong>
+                    <p style={{ margin: '5px 0 0 0', color: '#333', fontSize: '13px', lineHeight: '1.6' }}>
+                      Si votre cas n'est pas une urgence réelle, le rendez-vous sera reclassé en consultation normale et une majoration de <strong>5 000 DH</strong> sera appliquée pour utilisation injustifiée de la priorité d'urgence.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="suggestions-actions">
               <p>Voulez-vous prendre rendez-vous avec le Dr. {selectedMedecin.nom_complet} ?</p>
               <div className="btn-group">

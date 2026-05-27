@@ -43,7 +43,7 @@ const Navbar = () => {
           </>
         ) : (
           <>
-            <Link to="/login">Connexion</Link>
+            <Link to="/">Connexion</Link>
             <Link to="/register">Inscription</Link>
           </>
         )}

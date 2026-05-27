@@ -1,11 +1,9 @@
-import axios from 'axios';
-
-const API_BASE_URL = '/api/auth';
+import api from './api';
 
 export const authService = {
   login: async (username, password) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/login/`, {
+      const response = await api.post(`/auth/login/`, {
         username,
         password
       });
@@ -20,7 +18,7 @@ export const authService = {
 
   register: async (userData) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/register/`, userData);
+      const response = await api.post(`/auth/register/`, userData);
       return { success: true, data: response.data };
     } catch (error) {
       return {
@@ -32,7 +30,7 @@ export const authService = {
 
   logout: async () => {
     try {
-      await axios.post(`${API_BASE_URL}/logout/`);
+      await api.post(`/auth/logout/`);
       return { success: true };
     } catch (error) {
       return {
@@ -44,7 +42,7 @@ export const authService = {
 
   getProfile: async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/profile/`);
+      const response = await api.get(`/auth/profile/`);
       return { success: true, data: response.data };
     } catch (error) {
       return {
@@ -56,7 +54,7 @@ export const authService = {
 
   changePassword: async (oldPassword, newPassword, confirmPassword) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/change-password/`, {
+      const response = await api.post(`/auth/change-password/`, {
         old_password: oldPassword,
         new_password: newPassword,
         confirm_password: confirmPassword
@@ -72,7 +70,7 @@ export const authService = {
 
   deleteAccount: async (password) => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/delete-account/`, {
+      const response = await api.post(`/auth/delete-account/`, {
         password
       });
       return { success: true, data: response.data };

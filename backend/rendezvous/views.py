@@ -43,7 +43,7 @@ class RendezVousListView(generics.ListCreateAPIView):
         elif user.is_medecin:
             return RendezVous.objects.filter(medecin=user)
         elif user.is_patient:
-            return RendezVous.objects.filter(patient=user).exclude(statut='annulé')
+            return RendezVous.objects.filter(patient=user, visible_for_patient=True).exclude(statut='annulé')
         else:
             return RendezVous.objects.none()
 
@@ -90,7 +90,7 @@ class RendezVousDetailView(generics.RetrieveUpdateDestroyAPIView):
         """
         user = self.request.user
 
-        if user.is_admin:
+        if user.is_admin or user.is_reception:
             return RendezVous.objects.all()
         elif user.is_medecin:
             # Exclure les rendez-vous avec le statut "passe"
@@ -100,7 +100,7 @@ class RendezVousDetailView(generics.RetrieveUpdateDestroyAPIView):
             if self.request.method == 'DELETE':
                 return RendezVous.objects.filter(patient=user)
             # Exclure les rendez-vous annulés pour les autres requêtes
-            return RendezVous.objects.filter(patient=user).exclude(statut='annule')
+            return RendezVous.objects.filter(patient=user, visible_for_patient=True).exclude(statut='annule')
         else:
             return RendezVous.objects.none()
 
@@ -146,7 +146,8 @@ class RendezVousDetailView(generics.RetrieveUpdateDestroyAPIView):
 
         # Si c'est un patient et que le statut est "passe" ou "annule", supprimer définitivement
         if user.is_patient and (instance.statut == 'passe' or instance.statut == 'annule'):
-            instance.delete()
+            instance.visible_for_patient = False
+            instance.save()
         else:
             # Marquer comme annulé au lieu de supprimer
             instance.statut = 'annule'
@@ -319,18 +320,16 @@ def get_all_patient_rendezvous(request):
         }, status=status.HTTP_403_FORBIDDEN)
 
     # Récupérer tous les rendez-vous du patient, y compris ceux passés
-    rendezvous = RendezVous.objects.filter(patient=user)
+    rendezvous = RendezVous.objects.filter(patient=user, visible_for_patient=True)
+
+    # Trier les rendez-vous par date décroissante
+    rendezvous = rendezvous.order_by('-date')
 
     # Sérialiser les rendez-vous
     serializer = RendezVousListSerializer(rendezvous, many=True)
 
     return Response(serializer.data)
-    
-    # Trier les rendez-vous par date décroissante
-    rendezvous = rendezvous.order_by('-date')
-    
-    serializer = RendezVousListSerializer(rendezvous, many=True)
-    return Response(serializer.data)
+
 
 
 @api_view(['GET'])

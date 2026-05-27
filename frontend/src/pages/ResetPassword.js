@@ -55,7 +55,7 @@ const ResetPassword = () => {
       
       // Rediriger vers la page de connexion après 3 secondes
       setTimeout(() => {
-        navigate('/login');
+        navigate('/');
       }, 3000);
     } catch (error) {
       if (error.response && error.response.status === 404) {
@@ -135,7 +135,7 @@ const ResetPassword = () => {
           <button 
             type="button" 
             className="btn btn-link" 
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/')}
             style={{ padding: 0 }}
           >
             Retour à la connexion

@@ -359,4 +359,19 @@ export const rendezvousService = {
       return { success: false, error: 'Erreur' };
     }
   },
+
+  // Cacher un rendez-vous de l'historique du patient (soft delete)
+  hideRendezvousForPatient: async (id) => {
+    try {
+      const response = await api.patch(`/rendezvous/${id}/`, {
+        visible_for_patient: false
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Erreur lors de la suppression du rendez-vous'
+      };
+    }
+  },
 };

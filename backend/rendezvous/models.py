@@ -118,6 +118,10 @@ class RendezVous(models.Model):
         null=True,
         verbose_name="Notes (médecin)"
     )
+    visible_for_patient = models.BooleanField(
+        default=True,
+        verbose_name="Visible pour le patient"
+    )
     cree_le = models.DateTimeField(
         auto_now_add=True,
         verbose_name="Date de création"

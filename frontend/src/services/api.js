@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Configuration de base pour axios
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api',
+  baseURL: 'http://localhost:8000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -29,12 +29,12 @@ api.interceptors.response.use(
   },
   (error) => {
     // Gérer les erreurs 401 (non autorisé) uniquement si ce n'est pas une requête de login
-    if (error.response && error.response.status === 401 && !error.config.url.includes('/login')) {
+    if (error.response && error.response.status === 401 && !error.config.url.includes('/auth/login/')) {
       // Rediriger vers la page de connexion uniquement si nous ne sommes pas déjà sur cette page
-      if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+      if (window.location.pathname !== '/' && window.location.pathname !== '/register') {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('user');
-        window.location.href = '/login';
+        window.location.href = '/';
       }
     }
     return Promise.reject(error);

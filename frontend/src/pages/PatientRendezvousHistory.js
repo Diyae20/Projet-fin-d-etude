@@ -77,12 +77,12 @@ const PatientRendezvousHistory = () => {
   };
 
   const handleDeleteRendezvous = async (id) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous ? Cette action est irréversible.')) {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous de votre historique ? Il sera masqué de votre compte mais restera dans les archives du cabinet.')) {
       return;
     }
 
     try {
-      const result = await rendezvousService.deleteRendezvous(id);
+      const result = await rendezvousService.hideRendezvousForPatient(id);
 
       if (result.success) {
         setSuccess('Rendez-vous supprimé avec succès');

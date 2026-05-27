@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
     if (token && userData) {
       setUser(JSON.parse(userData));
       // Configurer axios pour inclure le token dans toutes les requêtes
-      axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+      api.defaults.headers.common['Authorization'] = `Token ${token}`;
     }
 
     setLoading(false);
@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      const response = await axios.post('/api/auth/login/', {
+      const response = await api.post('/auth/login/', {
         username,
         password
       });
@@ -34,8 +34,8 @@ export const AuthProvider = ({ children }) => {
       sessionStorage.setItem('token', token);
       sessionStorage.setItem('user', JSON.stringify(user));
 
-      // Configurer axios
-      axios.defaults.headers.common['Authorization'] = `Token ${token}`;
+      // Configurer api
+      api.defaults.headers.common['Authorization'] = `Token ${token}`;
 
       setUser(user);
       return { success: true, user: user };
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       console.log("Envoi de la requête d'inscription à /api/auth/register/");
-      const response = await axios.post('/api/auth/register/', userData);
+      const response = await api.post('/auth/register/', userData);
       console.log("Réponse de l'API:", response.data);
       return { success: true, data: response.data };
     } catch (error) {
@@ -71,13 +71,13 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
-    delete axios.defaults.headers.common['Authorization'];
+    delete api.defaults.headers.common['Authorization'];
     setUser(null);
   };
 
   const changePassword = async (oldPassword, newPassword, confirmPassword) => {
     try {
-      const response = await axios.post('/api/auth/change-password/', {
+      const response = await api.post('/auth/change-password/', {
         old_password: oldPassword,
         new_password: newPassword,
         confirm_password: confirmPassword
@@ -93,13 +93,13 @@ export const AuthProvider = ({ children }) => {
 
   const deleteAccount = async (password) => {
     try {
-      const response = await axios.post('/api/auth/delete-account/', {
+      const response = await api.post('/auth/delete-account/', {
         password
       });
       // Nettoyer le sessionStorage après la suppression du compte
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('user');
-      delete axios.defaults.headers.common['Authorization'];
+      delete api.defaults.headers.common['Authorization'];
       setUser(null);
       return { success: true, data: response.data };
     } catch (error) {

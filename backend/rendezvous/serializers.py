@@ -107,7 +107,7 @@ class RendezVousSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'patient', 'patient_id', 'medecin', 'medecin_id',
             'date', 'heure', 'statut', 'statut_display', 'type_consultation', 'priorite',
-            'motif', 'notes', 'cree_le', 'modifie_le'
+            'motif', 'visible_for_patient', 'notes', 'cree_le', 'modifie_le'
         ]
         read_only_fields = ['id', 'cree_le', 'modifie_le']
 
@@ -266,7 +266,7 @@ class RendezVousListSerializer(serializers.ModelSerializer):
         model = RendezVous
         fields = [
             'id', 'patient', 'medecin', 'date', 'heure', 'statut', 'statut_display',
-            'type_consultation', 'type_consultation_display', 'priorite', 'priorite_display', 'motif', 'notes'
+            'type_consultation', 'type_consultation_display', 'visible_for_patient', 'priorite', 'priorite_display', 'motif', 'notes'
         ]
 
 

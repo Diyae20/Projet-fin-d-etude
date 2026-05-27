@@ -23,7 +23,7 @@ const Home = () => {
             <Link to="/register" className="btn btn-primary">
               Créer un compte
             </Link>
-            <Link to="/login" className="btn btn-secondary" style={{ marginLeft: '10px' }}>
+            <Link to="/" className="btn btn-secondary" style={{ marginLeft: '10px' }}>
               Se connecter
             </Link>
           </div>
