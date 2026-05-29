@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'r
 import { AuthProvider } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Login from './pages/LoginCinematic';
-import Register from './pages/Register';
+import Register from './pages/RegisterCinematic';
 import MedecinList from './pages/MedecinList';
 import MedecinDetail from './pages/MedecinDetail';
 import MedecinDashboard from './pages/MedecinDashboard';
