@@ -231,6 +231,7 @@ const MedecinDetail = () => {
   const { user } = useAuth();
   const [medecin, setMedecin] = useState(null);
   const [creneaux, setCreneaux] = useState([]);
+  const joursSemaine = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -295,45 +296,78 @@ const MedecinDetail = () => {
   };
 
   const fetchCreneauxDisponibles = async () => {
-    if (!selectedDate) return;
+  if (!selectedDate) return;
 
-    // Vérifier si le médecin a des horaires configurés
-    if (!medecin) {
-      setCreneaux([]);
-      setDateComplete(true);
-      setMessageDate('Informations du médecin non disponibles');
-      return;
-    }
+  // Vérifier si le médecin a des horaires configurés
+  if (!medecin || !medecin.user || !medecin.user.id) {
+    setCreneaux([]);
+    setDateComplete(true);
+    setMessageDate('Informations du médecin non disponibles');
+    return;
+  }
 
-    // Obtenir le jour de la semaine en français
-    const joursSemaine = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
-    const jour = joursSemaine[selectedDate.getDay()];
-    
-    // Vérifier si le médecin travaille ce jour-là
-    const jourActif =  medecin[`${jour}_actif`];
-    if (!jourActif) {
-      setCreneaux([]);
-      setDateComplete(true);
-      setMessageDate(`Le médecin ne travaille pas les ${jour}s`);
-      return;
-    }
+  // Obtenir le jour de la semaine en français
+  const joursSemaine = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+  const jour = joursSemaine[selectedDate.getDay()];
 
-    const formattedDate = formatDateForAPI(selectedDate);
+  // Vérifier si le médecin travaille ce jour-là
+  const jourActif = medecin[`${jour}_actif`];
+  if (!jourActif) {
+    setCreneaux([]);
+    setDateComplete(true);
+    setMessageDate(`Le médecin ne travaille pas les ${jour}s`);
+    return;
+  }
+
+  const formattedDate = formatDateForAPI(selectedDate);
+  
+  try {
     const result = await rendezvousService.getCreneauxDisponibles(id, formattedDate);
 
     if (result.success) {
+      // Utiliser la durée de consultation si elle est disponible dans la réponse
+      const dureeConsultation = result.data.duree_consultation || 60;
+      
+      // Mettre à jour la durée de consultation du médecin si nécessaire
+      if (dureeConsultation !== (medecin.duree_consultation || 60)) {
+        setMedecin(prevMedecin => ({
+          ...prevMedecin,
+          duree_consultation: dureeConsultation
+        }));
+      }
+
+       const dateComplete = result.data.date_complete || (result.data.creneaux || []).length === 0;
+       setDateComplete(dateComplete);
+      
+      // Si la date est complète, afficher le message approprié
+      if (dateComplete && result.data.message) {
+        setMessageDate(typeof result.data.message === 'string' ? result.data.message : 'Tous les créneaux sont réservés pour cette date.');
+      } else if (!dateComplete) {
+        setMessageDate('');
+      }
+
       setCreneaux(result.data.creneaux || []);
-      setDateComplete(result.data.date_complete || (result.data.creneaux || []).length === 0);
-      setMessageDate(result.data.message || '');
+
+       if (dateComplete) {
+              // Tous les créneaux sont réservés pour cette date
+      }
+
+
     } else {
+      console.error('Erreur API:', result.error);
       setError(result.error);
     }
-  };
+  } catch (error) {
+    console.error('Erreur lors de la récupération des créneaux:', error);
+    setError('Une erreur est survenue lors de la récupération des créneaux disponibles.');
+  }
+};
+
+
 
   const handleDateChange = (date) => {
     setSelectedDate(date);
     setSelectedCreneau('');
-    setCreneaux([]);
   };
 
   const formatDateForAPI = (date) => {
@@ -571,14 +605,14 @@ const MedecinDetail = () => {
   };
 
   const handleCreneauSelect = (heure) => {
-    // Vérifier que le créneau existe dans la liste des créneaux disponibles
-    const creneauExists = creneaux.some(creneau => creneau.heure === heure);
-    if (creneauExists) {
-      setSelectedCreneau(heure);
-    } else {
-      setError(`Le créneau horaire ${heure} n\'est pas disponible.`);
-    }
-  };
+  if (typeof heure === 'string') {
+    setSelectedCreneau(heure);
+    setErrors({ ...errors, creneau: '' });
+  } else {
+    console.error('L\'heure du créneau n\'est pas une chaîne de caractères:', heure);
+  }
+ };
+
 
   const handlePrioritySelect = (priority) => {
     // Définir le type de priorité en fonction de la valeur
@@ -879,8 +913,9 @@ const MedecinDetail = () => {
         <p className="text-muted" style={{ marginBottom: '20px' }}>
           Sélectionnez une date et un créneau pour prendre rendez-vous avec le Dr. {medecin.nom}.
         </p>
-        {error && <Alert type="error" message={error} onClose={() => setError('')} />}
-        {success && <Alert type="success" message={success} onClose={() => setSuccess('')} />}
+        {error && <Alert type="error" message={typeof error === 'string' ? error : JSON.stringify(error)} onClose={() => setError('')} />}
+        {success && <Alert type="success" message={typeof success === 'string' ? success : JSON.stringify(success)} onClose={() => setSuccess('')} />}
+
 
         {/* Les boutons de priorité ont été supprimés */}
 
@@ -906,7 +941,7 @@ const MedecinDetail = () => {
                   onClick={() => handleCreneauSelect(creneau.heure)}
                   disabled={!creneau.disponible}
                 >
-                  {creneau.heure}
+                  {typeof creneau.heure === 'string' ? creneau.heure : JSON.stringify(creneau.heure)}
                 </button>
               ))}
             </div>
@@ -915,21 +950,16 @@ const MedecinDetail = () => {
         )}
 
         {selectedDate && creneaux.length === 0 && (
-          <div style={{ marginTop: '20px' }}>
-            {dateComplete ? (
-              <>
-                <div className="alert alert-warning" style={{ marginBottom: '20px' }}>
-                  {messageDate}
-                </div>
+  <div style={{ marginTop: '20px' }}>
+    <Alert 
+      type="info" 
+      message={typeof messageDate === 'string' ? messageDate : 'Tous les créneaux sont réservés pour cette date.'}
+    />
 
-              </>
-            ) : (
-              <p>
-                Aucun créneau disponible pour cette date. Veuillez choisir une autre date.
-              </p>
-            )}
-          </div>
-        )}
+
+
+  </div>
+ )}
 
       {/* Modale pour afficher les suggestions */}
       <Modal
@@ -966,7 +996,7 @@ const MedecinDetail = () => {
 
             {error && (
               <div className="alert alert-danger" style={{ marginTop: '15px' }}>
-                {error}
+                {typeof error === 'string' ? error : JSON.stringify(error)}
               </div>
             )}
 

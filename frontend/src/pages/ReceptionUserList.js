@@ -4,6 +4,8 @@ import api from '../services/api';
 import Alert from '../components/Alert';
 import './ReceptionUserList.css';
 
+
+
 const ReceptionUserList = () => {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -14,17 +16,43 @@ const ReceptionUserList = () => {
   const navigate = useNavigate();
   
 
+
+
+  // Premier chargement
   useEffect(() => {
-    fetchUsers();
+    if (users.length === 0) {
+      fetchUsers();
+    }
   }, []);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [filter, searchTerm]);
-
+  // Gérer les changements de filter
   useEffect(() => {
     filterUsers();
-  }, [users, filter, searchTerm]);
+  }, [filter]);
+
+  // Fonction de filtre simple (non débounce) pour une utilisation directe
+  const filterUsers = () => {
+    let filtered = [...users]; // Créer une copie du tableau pour éviter les modifications directes
+
+    if (filter !== 'all') {
+      filtered = filtered.filter(user => user.role === filter);
+    }
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(user =>
+        user.first_name.toLowerCase().includes(term) ||
+        user.last_name.toLowerCase().includes(term) ||
+        user.email.toLowerCase().includes(term)
+      );
+    }
+
+    setFilteredUsers(filtered);
+  };
+
+
+
+
 
   const fetchUsers = async () => {
     try {
@@ -49,6 +77,7 @@ const ReceptionUserList = () => {
 
       console.log('Patients:', patients);
       setUsers(patients);
+      filterUsers(); // Initialiser filteredUsers avec les patients filtrés
     } catch (error) {
       if (error.response && error.response.status === 403) {
         setError('Accès non autorisé. Vous devez être connecté en tant que réception.');
@@ -58,25 +87,22 @@ const ReceptionUserList = () => {
     } finally {
       setLoading(false);
     }
+    return Promise.resolve();
   };
 
-  const filterUsers = () => {
-    let filtered = users;
 
-    if (filter !== 'all') {
-      filtered = filtered.filter(user => user.role === filter);
-    }
 
-    if (searchTerm) {
-      filtered = filtered.filter(user =>
-        user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
 
-    setFilteredUsers(filtered);
-  };
+
+  // Utiliser la fonction de filtre direct pour les changements de users
+  useEffect(() => {
+    filterUsers();
+  }, [users]);
+
+  // Utiliser la fonction de filtre direct pour les changements de searchTerm
+  useEffect(() => {
+    filterUsers();
+  }, [searchTerm]);
 
   const handleDelete = async (userId) => {
     if (!window.confirm('Êtes-vous sûr de vouloir désactiver ce patient ? Son compte restera actif pour qu\'il puisse se connecter.')) {
@@ -101,11 +127,14 @@ const ReceptionUserList = () => {
       console.log(`Réponse de la mise à jour:`, updateResponse.data);
       console.log(`État visible_for_reception après mise à jour:`, updateResponse.data.visible_for_reception);
       console.log(`État medecin après mise à jour:`, updateResponse.data.medecin);
-      // Forcer le rechargement de la page pour mettre à jour la liste
-      console.log(`Rechargement de la page`);
-      setTimeout(() => {
-        window.location.href = window.location.href;
-      }, 500);
+      // Recharger les données pour mettre à jour la liste
+      console.log(`Rechargement des données`);
+      await fetchUsers();
+      
+      // Mettre à jour filteredUsers directement pour une meilleure réactivité
+      const updatedUsers = users.filter(user => user.id !== userId);
+      setUsers(updatedUsers);
+      filterUsers();
     } catch (error) {
       console.error("Erreur lors de la désactivation du patient:", error);
       console.error("Détails de l'erreur:", error.response);

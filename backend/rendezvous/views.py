@@ -355,13 +355,18 @@ def get_medecin_disponibilite_par_jour(request):
         # Essayer d'abord de récupérer le profil du médecin avec l'ID fourni
         try:
             medecin_profile = Medecin.objects.get(id=medecin_id)
-            max_patients = medecin_profile.max_patients_par_jour or 10  # 10 patients par défaut
+            max_patients = medecin_profile.max_patients_par_jour if medecin_profile.max_patients_par_jour else 10
             medecin_user = medecin_profile.user
         except Medecin.DoesNotExist:
-            # Si le profil n'existe pas, essayer de trouver un utilisateur avec l'ID fourni et le rôle 'medecin'
+            # Si le profil n'existe pas avec cet ID, essayer de trouver par l'ID utilisateur
             try:
                 medecin_user = User.objects.get(id=medecin_id, role='medecin')
-                max_patients = 10  # 10 patients par défaut
+                # Récupérer le profil médecin associé à cet utilisateur
+                try:
+                    medecin_profile = Medecin.objects.get(user=medecin_user)
+                    max_patients = medecin_profile.max_patients_par_jour if medecin_profile.max_patients_par_jour else 10
+                except Medecin.DoesNotExist:
+                    max_patients = 10
             except User.DoesNotExist:
                 return Response({
                     'error': 'Médecin non trouvé'
@@ -464,16 +469,23 @@ def get_rendezvous_disponibles(request):
     # Essayer d'abord de récupérer le profil du médecin avec l'ID fourni
     medecin_profile = None
     try:
+        # D'abord essayer de trouver par l'ID du profil médecin
         medecin_profile = Medecin.objects.get(id=medecin_id)
-        duree_consultation = medecin_profile.duree_consultation or 30  # 30 minutes par défaut
-        max_patients = medecin_profile.max_patients_par_jour or 10  # 10 patients par défaut
+        duree_consultation = medecin_profile.duree_consultation if medecin_profile.duree_consultation else 60
+        max_patients = medecin_profile.max_patients_par_jour if medecin_profile.max_patients_par_jour else 10
         medecin_user = medecin_profile.user
     except Medecin.DoesNotExist:
-        # Si le profil n'existe pas, essayer de trouver un utilisateur avec l'ID fourni et le rôle 'medecin'
+        # Si le profil n'existe pas avec cet ID, essayer de trouver par l'ID utilisateur
         try:
             medecin_user = User.objects.get(id=medecin_id, role='medecin')
-            duree_consultation = 30  # 30 minutes par défaut
-            max_patients = 10  # 10 patients par défaut
+            # Récupérer le profil médecin associé à cet utilisateur
+            try:
+                medecin_profile = Medecin.objects.get(user=medecin_user)
+                duree_consultation = medecin_profile.duree_consultation if medecin_profile.duree_consultation else 60
+                max_patients = medecin_profile.max_patients_par_jour if medecin_profile.max_patients_par_jour else 10
+            except Medecin.DoesNotExist:
+                duree_consultation = 60
+                max_patients = 10
         except User.DoesNotExist:
             return Response({
                 'error': 'Médecin non trouvé'
@@ -597,7 +609,8 @@ def get_rendezvous_disponibles(request):
         'creneaux': creneaux_disponibles,
         'date_complete': False,
         'max_patients': max_patients,
-        'patients_actuels': len(rendezvous_pris)
+        'patients_actuels': len(rendezvous_pris),
+        'duree_consultation': duree_consultation
     })
 
 
@@ -1205,6 +1218,8 @@ def emergency_booking(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def priority_booking(request):
     """
     Permet à un patient de prendre un créneau disponible ou de déplacer un rendez-vous de priorité basse
@@ -1338,9 +1353,9 @@ def priority_booking(request):
             available_slots = get_available_slots(search_date, medecin)
 
             if available_slots:
-        # Vérifier tous les créneaux disponibles un par un
+                # Vérifier tous les créneaux disponibles un par un
                 for slot_time in available_slots:
-            # Vérifier une dernière fois que le créneau est toujours disponible
+                    # Vérifier une dernière fois que le créneau est toujours disponible
                     slot_already_taken = RendezVous.objects.filter(
                         medecin_id=medecin_id,
                         date=search_date,
@@ -1348,26 +1363,26 @@ def priority_booking(request):
                         statut__in=['confirme', 'en_attente']
                     ).exists()
 
-            if not slot_already_taken:
-            # Créer directement le rendez-vous dans ce créneau disponible
-                new_rdv = RendezVous.objects.create(
-                    medecin_id=medecin_id,
-                    patient_id=patient_id,
-                    date=search_date,
-                    heure=slot_time,
-                    priorite=priority,
-                    type_consultation=type_consultation,
-                    statut='en_attente'  # Le rendez-vous est initialement en attente
-                )
+                    if not slot_already_taken:
+                        # Créer directement le rendez-vous dans ce créneau disponible
+                        new_rdv = RendezVous.objects.create(
+                            medecin_id=medecin_id,
+                            patient_id=patient_id,
+                            date=search_date,
+                            heure=slot_time,
+                            priorite=priority,
+                            type_consultation=type_consultation,
+                            statut='en_attente'  # Le rendez-vous est initialement en attente
+                        )
 
-            # Sérialiser le nouveau rendez-vous
-                serializer = RendezVousListSerializer(new_rdv)
+                        # Sérialiser le nouveau rendez-vous
+                        serializer = RendezVousListSerializer(new_rdv)
 
-                return Response({
-                    'success': True,
-                    "message": "Rendez-vous créé avec succès dans un créneau disponible",
-                    'rendezvous': serializer.data
-                })
+                        return Response({
+                            'success': True,
+                            "message": "Rendez-vous créé avec succès dans un créneau disponible",
+                            'rendezvous': serializer.data
+                        })
 
             else:
                 # Aucun créneau disponible ce jour-là, déplacer un rendez-vous de priorité basse
@@ -1574,8 +1589,10 @@ def priority_booking(request):
 
         # Vérifier si l'heure originale est toujours disponible
         new_heure_for_patient = None
-        if original_heure in available_slots_for_original_date:
-            new_heure_for_patient = original_heure
+        # Convertir l'heure originale en chaîne pour la comparaison
+        original_heure_str = original_heure.strftime('%H:%M') if hasattr(original_heure, 'strftime') else str(original_heure)
+        if original_heure_str in available_slots_for_original_date:
+            new_heure_for_patient = original_heure_str
         else:
             # Utiliser le premier créneau disponible pour le jour du rendez-vous original
             new_heure_for_patient = available_slots_for_original_date[0]

@@ -354,14 +354,6 @@ const MedecinPatients = () => {
               <button className="close-modal" onClick={handleCloseNotesModal}>x</button>
             </div>
             <div className="modal-body">
-              <p>
-                Date du rendez-vous: {new Date(selectedRendezvous.date).toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })} à {selectedRendezvous.heure}
-              </p>
               <div className="form-group">
                 <label htmlFor="notes">Notes du médecin:</label>
                 {isEditingNotes ? (

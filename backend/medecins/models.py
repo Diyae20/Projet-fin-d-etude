@@ -71,7 +71,7 @@ class Medecin(models.Model):
         verbose_name="Ville"
     )
     duree_consultation = models.IntegerField(
-        default=30,
+        default=60,
         verbose_name="Durée moyenne d'une consultation (en minutes)"
     )
     max_patients_par_jour = models.IntegerField(
