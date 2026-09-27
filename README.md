@@ -297,13 +297,3 @@ Vérifiez les permissions sur les fichiers statiques :
 sudo chown -R www-data:www-data /var/www/rendezvous/staticfiles
 sudo chmod -R 755 /var/www/rendezvous/staticfiles
 ```
-
-## Contributeurs
-
-- [Nom du contributeur 1] - Développeur principal
-- [Nom du contributeur 2] - Designer UI/UX
-- [Nom du contributeur 3] - Administrateur système
-
-## Licence
-
-Ce projet est sous licence [Nom de la licence]. Voir le fichier `LICENSE` pour plus d'informations.
